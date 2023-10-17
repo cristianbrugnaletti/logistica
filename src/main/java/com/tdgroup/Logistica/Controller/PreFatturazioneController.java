@@ -35,18 +35,16 @@ public class PreFatturazioneController {
 
 	@PostMapping("/aggiungiPreFattura")
 	public ResponseEntity<Object> aggiungiPreFattura(@RequestBody @Valid PreFatturazioneRequest request) {
-		try {
-			preFatturazioneFacade.aggiungiPreFatturazione(request);
-
-			return ResponseEntity.ok("prefattura aggiunta");
-		} catch (IllegalArgumentException e) {
-
-
-			return ResponseEntity.badRequest().body("prefattura non aggiunta");
-		} catch (Exception e) {
-
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	    try {
+	        preFatturazioneFacade.aggiungiPreFatturazione(request);
+	        return ResponseEntity.ok("Prefattura aggiunta con successo");
+	    } catch (IllegalArgumentException e) {
+	        return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+	    } catch (RuntimeException e) {
+	        return ResponseEntity.badRequest().body("Errore specifico: " + e.getMessage());
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Si è verificato un errore imprevisto");
+	    }
 	}
 
 
@@ -58,15 +56,14 @@ public class PreFatturazioneController {
 						.body("Il numero di fattura non può essere vuoto o nullo");
 			}
 
-			// Chiamata al servizio per rimuovere la fattura
+			
 			preFatturazioneFacade.rimuoviPreFattura(numeroPreFatturazione);
 
 			return ResponseEntity.status(HttpStatus.OK)
 					.body("Fattura rimossa con successo");
 
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("Errore durante la rimozione della fattura: " + e.getMessage());
+			return ResponseEntity.ok("Errore durante la rimozione della fattura: fattura non trovato con numero " +numeroPreFatturazione);
 		}
 	}
 
@@ -75,10 +72,10 @@ public class PreFatturazioneController {
 			@PathVariable("numeroPrefatturazione") String numeroPrefatturazione,
 			@RequestBody PreFatturazioneRequest request) {
 		try {
-			// Chiama il servizio per la modifica della pre-fatturazione
+			
 			PreFatturazioneDTO preFatturazioneDTO = preFatturazioneFacade.modificaPreFatturazione(numeroPrefatturazione, request);
 
-			// Ritorna la pre-fatturazione modificata
+			
 			return ResponseEntity.ok(preFatturazioneDTO);
 
 		} catch (IllegalArgumentException e) {

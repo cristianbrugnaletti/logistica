@@ -69,6 +69,9 @@ public class PreFatturazioneFacade {
 			// Genera il nuovo numero di prefatturazione autoincrementato
 			String nuovoNumeroPrefatturazione = generaNumeroPreFatturazione();
 			Double totale = importo + penale;
+			  if (scadenzaPreFatturazione.isBefore(dataPrefatturazione)) {
+		            throw new IllegalArgumentException("La scadenza della prefatturazione deve essere successiva alla data di prefatturazione");
+		        }
 			
 			   if (importo < 0) {
 		            throw new IllegalArgumentException("L'importo non può essere negativo");
