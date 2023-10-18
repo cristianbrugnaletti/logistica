@@ -45,6 +45,7 @@ public class PreFatturazioneFacade {
 	public PreFatturazioneDTO aggiungiPreFatturazione(PreFatturazioneRequest request) {
 		try {
 			// Verifica la validità della richiesta
+			logger.info("Inizio elaborazione richiesta di aggiunta pre-fatturazione");
 			if (request == null ||
 					request.getDataPrefatturazione() == null ||
 					request.getScadenzaPrefatturazione() == null ||
@@ -56,7 +57,7 @@ public class PreFatturazioneFacade {
 					request.getIdViaggio() == null) {
 				throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta pre-fatturazione");
 			}
-
+			logger.info("Validità della richiesta verificata con successo");
 			// Estrai i dati dalla richiesta
 			LocalDateTime dataPrefatturazione = request.getDataPrefatturazione();
 			Double importo = request.getImporto();
@@ -67,20 +68,21 @@ public class PreFatturazioneFacade {
 			Long idViaggio = request.getIdViaggio();
 			LocalDateTime scadenzaPreFatturazione = request.getScadenzaPrefatturazione();
 			// Genera il nuovo numero di prefatturazione autoincrementato
+			logger.info("Generazione del nuovo numero di prefatturazione");
 			String nuovoNumeroPrefatturazione = generaNumeroPreFatturazione();
 			Double totale = importo + penale;
-			  if (scadenzaPreFatturazione.isBefore(dataPrefatturazione)) {
-		            throw new IllegalArgumentException("La scadenza della prefatturazione deve essere successiva alla data di prefatturazione");
-		        }
-			
-			   if (importo < 0) {
-		            throw new IllegalArgumentException("L'importo non può essere negativo");
-		        }
+			if (scadenzaPreFatturazione.isBefore(dataPrefatturazione)) {
+				throw new IllegalArgumentException("La scadenza della prefatturazione deve essere successiva alla data di prefatturazione");
+			}
 
-		        
-		        if (penale < 0) {
-		            throw new IllegalArgumentException("La penale non può essere negativa");
-		        }
+			if (importo < 0) {
+				throw new IllegalArgumentException("L'importo non può essere negativo");
+			}
+
+
+			if (penale < 0) {
+				throw new IllegalArgumentException("La penale non può essere negativa");
+			}
 			// Ottieni il viaggio associato all'ID
 			Optional<Viaggio> viaggioOptional = viaggioService.getViaggioById(idViaggio);
 			if (!viaggioOptional.isPresent()) {
@@ -101,13 +103,14 @@ public class PreFatturazioneFacade {
 			preFatturazione.setScadenzaPrefatturazione(scadenzaPreFatturazione);
 			// Aggiungo la pre-fatturazione
 			PreFatturazione preFatturazioneAggiunta = preFatturazioneService.aggiungiPreFatturazione(preFatturazione);
-
+			logger.info("Aggiunta della pre-fatturazione completata con successo");
 			// Converto la pre-fatturazione aggiunta in DTO e la restituisco
+
 			return preFatturazioneMapper.preFatturazioneToDTO(preFatturazioneAggiunta);
 
 		} catch (IllegalArgumentException e) {
 			logger.error("Errore durante l'aggiunta della pre-fatturazione: attributi mancanti o non validi", e);
-			throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta pre-fatturazione");
+			throw new IllegalArgumentException(e.getMessage());
 		} catch (Exception e) {
 			logger.error("Errore imprevisto nell'aggiunta della pre-fatturazione", e);
 			throw new RuntimeException("Errore imprevisto nell'aggiunta della pre-fatturazione");
@@ -137,15 +140,15 @@ public class PreFatturazioneFacade {
 		try {
 			if (StringUtils.isBlank(numeroPreFatturazione)) {
 				logger.error("Il numero di fattura è vuoto o nullo");
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il numero di fattura non può essere vuoto");
+				throw new ResponseStatusException(HttpStatus.OK, "Il numero di fattura non può essere vuoto");
 			}
 
 			logger.info("Rimozione della fattura con numero: {}", numeroPreFatturazione);
 
-			PreFatturazione fatturazioneEsistente = preFatturazioneService.findPreFatturazione(numeroPreFatturazione)
-					.orElseThrow(()-> new RuntimeException("Fatturazione non trovata per il numero: " + numeroPreFatturazione));
+			PreFatturazione preFatturazioneEsistente = preFatturazioneService.findPreFatturazione(numeroPreFatturazione)
+					.orElseThrow(()-> new ResponseStatusException(HttpStatus.OK, "Fatturazione non trovata per il numero: " + numeroPreFatturazione));
 
-			preFatturazioneService.eliminaPreFatturazione(fatturazioneEsistente);
+			preFatturazioneService.eliminaPreFatturazione(preFatturazioneEsistente);
 
 			logger.info("Fattura rimossa con successo: {}", numeroPreFatturazione);
 
@@ -162,39 +165,43 @@ public class PreFatturazioneFacade {
 
 	public PreFatturazioneDTO modificaPreFatturazione(String numeroPrefatturazione, PreFatturazioneRequest request) {
 		try {
+			logger.info("Inizio elaborazione richiesta di modifica pre-fatturazione");
 
-
-			// Ottieni la pre-fatturazione associata al numero prefatturazione
+			logger.debug("Recupero della pre-fatturazione per il numero: {}", numeroPrefatturazione);
 			PreFatturazione preFatturazioneEsistente = preFatturazioneService
 					.findPreFatturazione(numeroPrefatturazione)
-					.orElseThrow(() -> new RuntimeException("La pre-fatturazione " + numeroPrefatturazione + " non esiste"));
+					.orElseThrow(() -> new IllegalArgumentException("La pre-fatturazione " + numeroPrefatturazione + " non esiste"));
 
-			// Estrai i dati dalla richiesta
 			LocalDateTime dataPrefatturazione = request.getDataPrefatturazione();
 			Double importo = request.getImporto();
 			Double penale = request.getPenale();
-
 			Long cliente = request.getCliente();
 			String fornitore = request.getFornitore();
 			Long idViaggio = request.getIdViaggio();
 			LocalDateTime scadenzaPreFatturazione = request.getScadenzaPrefatturazione();
 			Double totale = importo + penale;
-			   if (importo < 0) {
-		            throw new IllegalArgumentException("L'importo non può essere negativo");
-		        }
+			
+			if (scadenzaPreFatturazione.isBefore(dataPrefatturazione)) {
+				throw new IllegalArgumentException("La scadenza della prefatturazione deve essere successiva alla data di prefatturazione");
+			}
+			
+			if (importo < 0) {
+				logger.error("L'importo non può essere negativo");
+				throw new IllegalArgumentException("L'importo non può essere negativo");
+			}
 
-		        
-		        if (penale < 0) {
-		            throw new IllegalArgumentException("La penale non può essere negativa");
-		        }
-			// Ottieni il viaggio associato all'ID
+			if (penale < 0) {
+				logger.error("La penale non può essere negativa");
+				throw new IllegalArgumentException("La penale non può essere negativa");
+			}
+
 			Optional<Viaggio> viaggioOptional = viaggioService.getViaggioById(idViaggio);
 			if (!viaggioOptional.isPresent()) {
+				logger.error("Viaggio non trovato per l'ID specificato: {}", idViaggio);
 				throw new IllegalArgumentException("Viaggio non trovato per l'ID specificato: " + idViaggio);
 			}
 			Viaggio viaggio = viaggioOptional.get();
 
-			// Aggiorna la pre-fatturazione con i nuovi dati
 			preFatturazioneEsistente.setDataPrefatturazione(dataPrefatturazione);
 			preFatturazioneEsistente.setImporto(importo);
 			preFatturazioneEsistente.setPenale(penale);
@@ -204,15 +211,18 @@ public class PreFatturazioneFacade {
 			preFatturazioneEsistente.setViaggio(viaggio);
 			preFatturazioneEsistente.setScadenzaPrefatturazione(scadenzaPreFatturazione);
 
-			// Salva le modifiche alla pre-fatturazione
+			logger.info("Salva le modifiche alla pre-fatturazione");
 			PreFatturazione preFatturazioneModificata = preFatturazioneService.modificaPreFatturazione(preFatturazioneEsistente);
 
-			// Converto la pre-fatturazione modificata in DTO e la restituisco
+			logger.info("Conversione della pre-fatturazione modificata in DTO");
+
+			logger.info("Fine elaborazione richiesta di modifica pre-fatturazione");
+
 			return preFatturazioneMapper.preFatturazioneToDTO(preFatturazioneModificata);
 
 		} catch (IllegalArgumentException e) {
-			logger.error("Errore durante la modifica della pre-fatturazione: attributi mancanti o non validi", e);
-			throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di modifica pre-fatturazione");
+			logger.error("Errore durante la validazione della richiesta", e);
+			throw new IllegalArgumentException(e.getMessage());
 		} catch (Exception e) {
 			logger.error("Errore imprevisto nella modifica della pre-fatturazione", e);
 			throw new RuntimeException("Errore imprevisto nella modifica della pre-fatturazione");
@@ -220,21 +230,40 @@ public class PreFatturazioneFacade {
 	}
 
 
+
 	public List<PreFatturazioneDTO> VisualizzaTutteLePreFatture() {
-		List<PreFatturazione> preFatturazioni = preFatturazioneService.findAll();
+		try {
 
-		if (preFatturazioni == null) {
-			throw new IllegalArgumentException("Nessuna fattura trovata");
+			logger.info("Inizio visualizzazione di tutte le pre-fatture");
+
+			List<PreFatturazione> preFatturazioni = preFatturazioneService.findAll();
+
+			if (preFatturazioni.isEmpty()) {
+
+				logger.error("Nessuna fattura trovata");
+				throw new IllegalArgumentException("Nessuna fattura trovata");
+			}
+
+
+			logger.info("Conversione delle pre-fatturazioni in DTO");
+			return preFatturazioneMapper.PreFatturazioneToDTOList(preFatturazioni);
+
+		} catch (IllegalArgumentException e) {
+
+			logger.error("Errore durante la visualizzazione delle pre-fatture", e);
+			throw e;  
+		} catch (Exception e) {
+
+			logger.error("Errore imprevisto nella visualizzazione delle pre-fatture", e);
+			throw new RuntimeException("Errore imprevisto nella visualizzazione delle pre-fatture");
 		}
-
-		return preFatturazioneMapper.PreFatturazioneToDTOList(preFatturazioni);
 	}
 
 
 
 	public PreFatturazioneDTO visualizzaPreFatturazione(String numeroPreFatturazione) {
 		if (StringUtils.isBlank( numeroPreFatturazione)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il numero di prefattura non può essere vuoto");
+			throw new ResponseStatusException(HttpStatus.OK, "Il numero di prefattura non può essere vuoto");
 		}
 
 		try {
@@ -244,7 +273,7 @@ public class PreFatturazioneFacade {
 					.map(preFatturazioneMapper::preFatturazioneToDTO)
 					.orElseThrow(() -> {
 						logger.warn("Fatturazione non trovata con il numero di fattura: {}", numeroPreFatturazione);
-						return new ResponseStatusException(HttpStatus.NOT_FOUND, "Fatturazione non trovata");
+						return new ResponseStatusException(HttpStatus.OK, "Fatturazione non trovata con numero: "+numeroPreFatturazione);
 					});
 
 			logger.info("Fatturazione trovata con il numero di fattura: {}", numeroPreFatturazione);
