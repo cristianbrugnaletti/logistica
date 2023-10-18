@@ -39,70 +39,69 @@ public class FatturazioneFacade {
 	private static final Logger logger = LoggerFactory.getLogger(FatturazioneFacade.class);
 
 	public FatturazioneDTO aggiungiFatturazione(FatturazioneRequest request) {
-	    try {
-	        if (request == null ||
-	                request.getDataEmissione() == null ||
-	                request.getImporto() == null ||
-	                request.getPenale() == null ||
+		try {
+			if (request == null ||
+					request.getDataEmissione() == null ||
+					request.getImporto() == null ||
+					request.getPenale() == null ||
+					request.getCliente() == null ||
+					StringUtils.isBlank(request.getFornitore()) ||
+					request.getIdViaggio() == null) {
+				logger.error("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
+				throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
+			}
 
-	                request.getCliente() == null ||
-	                StringUtils.isBlank(request.getFornitore()) ||
-	                request.getIdViaggio() == null) {
-	            logger.error("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
-	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
-	        }
+			LocalDateTime dataEmissione = request.getDataEmissione();
+			Double importo = request.getImporto();
+			Double penale = request.getPenale();
 
-	        LocalDateTime dataEmissione = request.getDataEmissione();
-	        Double importo = request.getImporto();
-	        Double penale = request.getPenale();
+			Long cliente = request.getCliente();
+			String fornitore = request.getFornitore();
+			Long idViaggio = request.getIdViaggio();
+			Double totale = importo + penale;
 
-	        Long cliente = request.getCliente();
-	        String fornitore = request.getFornitore();
-	        Long idViaggio = request.getIdViaggio();
-	        Double totale = importo + penale;
+			if (importo < 0) {
+				logger.error("L'importo non può essere negativo");
+				throw new IllegalArgumentException("L'importo non può essere negativo");
+			}
 
-	        if (importo < 0) {
-	            logger.error("L'importo non può essere negativo");
-	            throw new IllegalArgumentException("L'importo non può essere negativo");
-	        }
+			if (penale < 0) {
+				logger.error("La penale non può essere negativa");
+				throw new IllegalArgumentException("La penale non può essere negativa");
+			}
 
-	        if (penale < 0) {
-	            logger.error("La penale non può essere negativa");
-	            throw new IllegalArgumentException("La penale non può essere negativa");
-	        }
 
-	        // Genero il nuovo numero di fattura autoincrementato
-	        String nuovoNumeroFattura = generaNumeroFattura();
-	        logger.info("Nuovo numero di fattura generato: {}", nuovoNumeroFattura);
-	        Optional<Viaggio> viaggioOptional = viaggioService.getViaggioById(idViaggio);
-	        if (!viaggioOptional.isPresent()) {
-	            logger.error("Viaggio non trovato per l'ID specificato: " + idViaggio);
-	            throw new IllegalArgumentException("Viaggio non trovato per l'ID specificato: " + idViaggio);
-	        }
-	        Viaggio viaggio = viaggioOptional.get();
+			String nuovoNumeroFattura = generaNumeroFattura();
+			logger.info("Nuovo numero di fattura generato: {}", nuovoNumeroFattura);
+			Optional<Viaggio> viaggioOptional = viaggioService.getViaggioById(idViaggio);
+			if (!viaggioOptional.isPresent()) {
+				logger.error("Viaggio non trovato per l'ID specificato: " + idViaggio);
+				throw new IllegalArgumentException("Viaggio non trovato per l'ID specificato: " + idViaggio);
+			}
+			Viaggio viaggio = viaggioOptional.get();
 
-	        Fatturazione fatturazione = new Fatturazione();
-	        fatturazione.setDataEmissione(dataEmissione);
-	        fatturazione.setImporto(importo);
-	        fatturazione.setPenale(penale);
-	        fatturazione.setTotale(totale);
-	        fatturazione.setCliente(cliente);
-	        fatturazione.setFornitore(fornitore);
-	        fatturazione.setViaggio(viaggio);
-	        fatturazione.setNumeroFattura(nuovoNumeroFattura);
+			Fatturazione fatturazione = new Fatturazione();
+			fatturazione.setDataEmissione(dataEmissione);
+			fatturazione.setImporto(importo);
+			fatturazione.setPenale(penale);
+			fatturazione.setTotale(totale);
+			fatturazione.setCliente(cliente);
+			fatturazione.setFornitore(fornitore);
+			fatturazione.setViaggio(viaggio);
+			fatturazione.setNumeroFattura(nuovoNumeroFattura);
 
-	        Fatturazione fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazione);
-	        logger.info("Fatturazione aggiunta con successo: {}", fatturazioneAggiunta.getNumeroFattura());
-	        // Converte la fatturazione aggiunta in DTO e la restituisce
-	        return fatturazioneMapper.fatturazioneToDTO(fatturazioneAggiunta);
+			Fatturazione fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazione);
+			logger.info("Fatturazione aggiunta con successo: {}", fatturazioneAggiunta.getNumeroFattura());
 
-	    } catch (IllegalArgumentException e) {
-	        logger.error("Errore durante l'aggiunta della fatturazione: attributi mancanti o non validi", e);
-	        throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
-	    } catch (Exception e) {
-	        logger.error("Errore imprevisto nell'aggiunta della fatturazione", e);
-	        throw new RuntimeException("Errore imprevisto nell'aggiunta della fatturazione", e);
-	    }
+			return fatturazioneMapper.fatturazioneToDTO(fatturazioneAggiunta);
+
+		} catch (IllegalArgumentException e) {
+			logger.error("Errore durante l'aggiunta della fatturazione: attributi mancanti o non validi", e);
+			throw new IllegalArgumentException(e.getMessage());
+		} catch (Exception e) {
+			logger.error("Errore imprevisto nell'aggiunta della fatturazione", e);
+			throw new RuntimeException("Errore imprevisto nell'aggiunta della fatturazione", e);
+		}
 	}
 
 	public String generaNumeroFattura() {
@@ -128,14 +127,14 @@ public class FatturazioneFacade {
 		try {
 			if (StringUtils.isBlank(numeroFattura)) {
 				logger.error("Il numero di fattura è vuoto o nullo");
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il numero di fattura non può essere vuoto");
+				throw new ResponseStatusException(HttpStatus.OK, "Il numero di fattura non può essere vuoto");
 			}
 
 			logger.info("Rimozione della fattura con numero: {}", numeroFattura);
 
 			Fatturazione fatturazioneEsistente = fatturazioneService.findFatturazione(numeroFattura)
-					.orElseThrow(() -> new RuntimeException("Fatturazione non trovata per il numero: " + numeroFattura));
-			logger.error("fatturazione non trovata con numero"+numeroFattura);
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.OK, "Fatturazione non trovata per il numero: " + numeroFattura));
+
 			fatturazioneService.eliminaFatturazione(fatturazioneEsistente);
 			logger.info("Fattura rimossa con successo: {}", numeroFattura);
 
@@ -148,23 +147,24 @@ public class FatturazioneFacade {
 		}
 	}
 
+
 	public List<FatturazioneDTO> VisualizzaTutteLeFatture() {
 		List<Fatturazione> fatturazioni = fatturazioneService.findAll();
 		logger.info("chiamata per tutte le fatture");
-		if (fatturazioni == null) {
+		if (fatturazioni == null || fatturazioni.isEmpty()) {
 			logger.error("nessuna fatturazione trovata");
-			throw new IllegalArgumentException("Nessuna fattura trovata");
-			
+			throw new IllegalArgumentException("Nessuna fattura presente");
+
 		}
-		
+
 		return fatturazioneMapper.fatturazioneToDTOList(fatturazioni);
-		
+
 	}
 
 	public FatturazioneDTO visualizzaFatturazione(String numeroFattura) {
 		if (StringUtils.isBlank(numeroFattura)) {
 			logger.error("Il numero di fattura non può essere vuoto");
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il numero di fattura non può essere vuoto");
+			throw new ResponseStatusException(HttpStatus.OK, "Il numero di fattura non può essere vuoto");
 		}
 
 		try {
@@ -174,7 +174,7 @@ public class FatturazioneFacade {
 					.map(fatturazioneMapper::fatturazioneToDTO)
 					.orElseThrow(() -> {
 						logger.warn("Fatturazione non trovata con il numero di fattura: {}", numeroFattura);
-						return new ResponseStatusException(HttpStatus.NOT_FOUND, "Fatturazione non trovata");
+						return new ResponseStatusException(HttpStatus.OK, "Fatturazione non trovata con numero di fattura: "+numeroFattura);
 					});
 
 			logger.info("Fatturazione trovata con il numero di fattura: {}", numeroFattura);

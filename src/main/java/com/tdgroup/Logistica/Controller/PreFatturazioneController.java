@@ -21,6 +21,7 @@ import com.tdgroup.Logistica.DTORequest.PreFatturazioneRequest;
 import com.tdgroup.Logistica.DTOResponse.FatturazioneDTO;
 import com.tdgroup.Logistica.DTOResponse.PreFatturazioneDTO;
 import com.tdgroup.Logistica.Facade.PreFatturazioneFacade;
+import com.tdgroup.Logistica.GestioneRisposte.Risposte;
 
 import jakarta.validation.Valid;
 
@@ -35,82 +36,117 @@ public class PreFatturazioneController {
 
 	@PostMapping("/aggiungiPreFattura")
 	public ResponseEntity<Object> aggiungiPreFattura(@RequestBody @Valid PreFatturazioneRequest request) {
-	    try {
-	        preFatturazioneFacade.aggiungiPreFatturazione(request);
-	        return ResponseEntity.ok("Prefattura aggiunta con successo");
-	    } catch (IllegalArgumentException e) {
-	        return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
-	    } catch (RuntimeException e) {
-	        return ResponseEntity.badRequest().body("Errore specifico: " + e.getMessage());
-	    } catch (Exception e) {
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Si è verificato un errore imprevisto");
-	    }
+		 logger.info("Richiesta ricevuta per aggiungere una nuova fattura.");
+	        try {
+	            preFatturazioneFacade.aggiungiPreFatturazione(request);
+	            logger.info("preFattura aggiunta con successo.");
+
+	            return ResponseEntity.ok(Risposte.SuccessResponse("preFattura aggiunta con successo", "/aggiungiFattura"));
+	        } catch (IllegalArgumentException e) {
+	            logger.error("Errore durante l'aggiunta della prefattura: attributi mancanti o non validi", e);
+
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	                    .body(Risposte.ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage(), "/aggiungiFattura"));
+	        } catch (Exception e) {
+	            logger.error("Errore imprevisto durante l'aggiunta della fattura", e);
+
+	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                    .body(Risposte.ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), "/aggiungiFattura"));
+	        }
 	}
 
 
 	@DeleteMapping("RimuoviPrefatturazione/{numeroPreFatturazione}")
 	public ResponseEntity<Object> rimuoviPreFattura(@PathVariable String numeroPreFatturazione) {
-		try {
-			if (numeroPreFatturazione == null || numeroPreFatturazione.isBlank()) {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-						.body("Il numero di fattura non può essere vuoto o nullo");
-			}
+		 logger.info("Richiesta ricevuta per rimuovere la fattura con numero: {}", numeroPreFatturazione);
+	       try {
+	           preFatturazioneFacade.rimuoviPreFattura(numeroPreFatturazione);
+	           logger.info("Fattura rimossa con successo: {}", numeroPreFatturazione);
 
-			
-			preFatturazioneFacade.rimuoviPreFattura(numeroPreFatturazione);
+	           // SuccessResponse richiede un messaggio, passiamo un messaggio generico
+	           return ResponseEntity.status(HttpStatus.OK)
+	                   .body(Risposte.SuccessResponse("Fattura rimossa con successo", "/RimuoviFattura/" + numeroPreFatturazione));
+	       } catch (ResponseStatusException e) {
+	           logger.error("Errore durante la rimozione della fattura: {}", e.getMessage());
 
-			return ResponseEntity.status(HttpStatus.OK)
-					.body("Fattura rimossa con successo");
-
-		} catch (Exception e) {
-			return ResponseEntity.ok("Errore durante la rimozione della fattura: fattura non trovato con numero " +numeroPreFatturazione);
-		}
+	           // Utilizza il metodo ErrorResponseHttp dalla classe Risposte direttamente nel return
+	           return ResponseEntity.status(e.getStatusCode())
+	                   .body(Risposte.ErrorResponse(e.getStatusCode().value(), e.getReason(), "/RimuoviFattura/" + numeroPreFatturazione));
+	       }
 	}
+
 
 	@PutMapping("/modifica/{numeroPrefatturazione}")
 	public ResponseEntity<Object> modificaPreFatturazione(
-			@PathVariable("numeroPrefatturazione") String numeroPrefatturazione,
-			@RequestBody PreFatturazioneRequest request) {
-		try {
-			
-			PreFatturazioneDTO preFatturazioneDTO = preFatturazioneFacade.modificaPreFatturazione(numeroPrefatturazione, request);
-
-			
-			return ResponseEntity.ok(preFatturazioneDTO);
-
-		} catch (IllegalArgumentException e) {
-			logger.error("Errore durante la modifica della pre-fatturazione: attributi mancanti o non validi", e);
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body("Errore: attributi mancanti o non validi nella richiesta di modifica pre-fatturazione");
-		} catch (Exception e) {
-			logger.error("Errore imprevisto nella modifica della pre-fatturazione", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("Errore imprevisto nella modifica della pre-fatturazione");
-		}
+	        @PathVariable("numeroPrefatturazione") String numeroPrefatturazione,
+	        @RequestBody PreFatturazioneRequest request) {
+	    try {
+	        logger.info("Inizio modifica della pre-fatturazione");
+	        PreFatturazioneDTO preFatturazioneDTO = preFatturazioneFacade.modificaPreFatturazione(numeroPrefatturazione, request);
+	        logger.info("Fine modifica della pre-fatturazione");
+	        return ResponseEntity.ok(preFatturazioneDTO);
+	    } catch (IllegalArgumentException e) {
+	        logger.error("Errore durante la modifica della pre-fatturazione: attributi mancanti o non validi", e);
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	        		 .body(Risposte.ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage(), "/aggiungipreFattura"));
+	    } catch (Exception e) {
+	        logger.error("Errore imprevisto nella modifica della pre-fatturazione", e);
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                .body(Risposte.ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Errore imprevisto nella modifica della pre-fatturazione", "/modifica/" + numeroPrefatturazione));
+	    }
 	}
+
+
 
 
 	@GetMapping("/visualizzaTutteLePreFatture")
 	public ResponseEntity<Object> visualizzaTutteLeFatture() {
-		List<PreFatturazioneDTO> fatturazioni = preFatturazioneFacade.VisualizzaTutteLePreFatture();
-
-		if (fatturazioni.isEmpty()) {
-			return ResponseEntity.ok("Nessuna prefattura trovata");
-		}
-
-		return ResponseEntity.ok(fatturazioni);
+	    try {
+	        logger.info("Inizio visualizzazione di tutte le pre-fatture");
+	        List<PreFatturazioneDTO> fatturazioni = preFatturazioneFacade.VisualizzaTutteLePreFatture();
+	        if (fatturazioni.isEmpty()) {
+	            logger.info("Nessuna prefattura trovata");
+	            return ResponseEntity.ok("Nessuna prefattura trovata");
+	        }
+	        logger.info("Fine visualizzazione di tutte le pre-fatture");
+	        return ResponseEntity.ok(fatturazioni);
+	    } catch (Exception e) {
+	        logger.error("Errore durante la visualizzazione delle pre-fatture", e);
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                .body("Si è verificato un errore imprevisto durante la visualizzazione delle pre-fatture");
+	    }
 	}
 
 
 	@GetMapping("/visualizzaPreFatturazione/{numeroPreFatturazione}")
 	public ResponseEntity<Object> visualizzaPreFatturazione(@PathVariable("numeroPreFatturazione") String numeroPreFatturazione) {
-		try {
-			PreFatturazioneDTO preFatturazioneDTO = preFatturazioneFacade.visualizzaPreFatturazione(numeroPreFatturazione);
-			return ResponseEntity.ok(preFatturazioneDTO);
-		} catch (ResponseStatusException e) {
-			return ResponseEntity.ok("Nessuna fatturazione trovata con il numero di prefattura: " + numeroPreFatturazione);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore durante la visualizzazione della prefatturazione");
-		}
+	    logger.info("Richiesta ricevuta per visualizzare la pre-fatturazione con numero di prefattura: {}", numeroPreFatturazione);
+
+	    try {
+	        PreFatturazioneDTO preFatturazioneDTO = preFatturazioneFacade.visualizzaPreFatturazione(numeroPreFatturazione);
+	        logger.info("Visualizzazione della pre-fatturazione effettuata per la prefattura con numero: {}", numeroPreFatturazione);
+
+	        return ResponseEntity.ok(preFatturazioneDTO);
+	    } catch (ResponseStatusException e) {
+	        logger.warn("Nessuna pre-fatturazione trovata con il numero di prefattura: {}", numeroPreFatturazione);
+
+	        // Utilizza ErrorResponseHttp per creare la risposta di errore
+	        return ResponseEntity.ok(Risposte.ErrorResponseHttp(
+	                e.getStatusCode(),
+	                e.getReason(),
+	                "/visualizzaPreFatturazione/" + numeroPreFatturazione)
+	        );
+	    } catch (Exception e) {
+	        logger.error("Errore durante la visualizzazione della pre-fatturazione", e);
+
+	        // Utilizza ErrorResponse per creare la risposta di errore
+	        return ResponseEntity.ok(Risposte.ErrorResponse(
+	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+	                "Errore durante la visualizzazione della pre-fatturazione",
+	                "/visualizzaPreFatturazione/" + numeroPreFatturazione)
+	        );
+	    }
 	}
+
+
 }
