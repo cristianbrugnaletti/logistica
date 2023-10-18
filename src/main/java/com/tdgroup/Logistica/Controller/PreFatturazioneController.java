@@ -63,13 +63,13 @@ public class PreFatturazioneController {
 	           preFatturazioneFacade.rimuoviPreFattura(numeroPreFatturazione);
 	           logger.info("Fattura rimossa con successo: {}", numeroPreFatturazione);
 
-	           // SuccessResponse richiede un messaggio, passiamo un messaggio generico
+	           
 	           return ResponseEntity.status(HttpStatus.OK)
 	                   .body(Risposte.SuccessResponse("Fattura rimossa con successo", "/RimuoviFattura/" + numeroPreFatturazione));
 	       } catch (ResponseStatusException e) {
 	           logger.error("Errore durante la rimozione della fattura: {}", e.getMessage());
 
-	           // Utilizza il metodo ErrorResponseHttp dalla classe Risposte direttamente nel return
+	           
 	           return ResponseEntity.status(e.getStatusCode())
 	                   .body(Risposte.ErrorResponse(e.getStatusCode().value(), e.getReason(), "/RimuoviFattura/" + numeroPreFatturazione));
 	       }
@@ -130,7 +130,7 @@ public class PreFatturazioneController {
 	    } catch (ResponseStatusException e) {
 	        logger.warn("Nessuna pre-fatturazione trovata con il numero di prefattura: {}", numeroPreFatturazione);
 
-	        // Utilizza ErrorResponseHttp per creare la risposta di errore
+	       
 	        return ResponseEntity.ok(Risposte.ErrorResponseHttp(
 	                e.getStatusCode(),
 	                e.getReason(),
@@ -139,7 +139,7 @@ public class PreFatturazioneController {
 	    } catch (Exception e) {
 	        logger.error("Errore durante la visualizzazione della pre-fatturazione", e);
 
-	        // Utilizza ErrorResponse per creare la risposta di errore
+	        
 	        return ResponseEntity.ok(Risposte.ErrorResponse(
 	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
 	                "Errore durante la visualizzazione della pre-fatturazione",
