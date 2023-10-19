@@ -18,13 +18,16 @@ import com.tdgroup.Logistica.Mapper.FatturazioneMapper;
 import com.tdgroup.Logistica.Model.Fatturazione;
 import com.tdgroup.Logistica.Model.Viaggio;
 import com.tdgroup.Logistica.Repository.FatturazioneRepository;
+import com.tdgroup.Logistica.Service.ChiamataHttp;
 import com.tdgroup.Logistica.Service.FatturazioneService;
 import com.tdgroup.Logistica.Service.ViaggioService;
 
 @Service
 public class FatturazioneFacade {
 
-
+	  @Autowired
+	    private ChiamataHttp chiamataHttpService;
+	
 	@Autowired
 	FatturazioneService fatturazioneService;
 	@Autowired
@@ -80,12 +83,14 @@ public class FatturazioneFacade {
 			}
 			Viaggio viaggio = viaggioOptional.get();
 
+			
+			Long idCliente = chiamataHttpService.getIdCliente(cliente);
 			Fatturazione fatturazione = new Fatturazione();
 			fatturazione.setDataEmissione(dataEmissione);
 			fatturazione.setImporto(importo);
 			fatturazione.setPenale(penale);
 			fatturazione.setTotale(totale);
-			fatturazione.setCliente(cliente);
+			fatturazione.setCliente(idCliente);
 			fatturazione.setFornitore(fornitore);
 			fatturazione.setViaggio(viaggio);
 			fatturazione.setNumeroFattura(nuovoNumeroFattura);
