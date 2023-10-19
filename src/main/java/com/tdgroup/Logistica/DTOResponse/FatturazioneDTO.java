@@ -1,6 +1,7 @@
 package com.tdgroup.Logistica.DTOResponse;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class FatturazioneDTO {
 	private String numeroFattura;
@@ -10,7 +11,7 @@ public class FatturazioneDTO {
     private Double totale;
     private Long cliente;
     private String fornitore;
-    private Long idViaggio;
+    private List<Long> idViaggio;
     
     
     
@@ -56,12 +57,13 @@ public class FatturazioneDTO {
 	public void setFornitore(String fornitore) {
 		this.fornitore = fornitore;
 	}
-	public Long getIdViaggio() {
+	public List<Long> getIdViaggio() {
 		return idViaggio;
 	}
-	public void setIdViaggio(Long idViaggio) {
+	public void setIdViaggio(List<Long> idViaggio) {
 		this.idViaggio = idViaggio;
 	}
+	
     
     
     

@@ -4,30 +4,54 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Viaggio {
-	  	@Id
+	  @Id
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	    private long ID;
-	  
-	  
-	  
-	  
 
-	public Viaggio() {
-		super();
-	}
+	    @ManyToOne 
+	    @JoinColumn(name = "fatturazione_numero_fattura")
+	    private Fatturazione fatturazione;
 
-	public long getID() {
-		return ID;
-	}
+	    @ManyToOne 
+	    @JoinColumn(name = "pre_fatturazione_numero_pre_fatturazione")
+	    private PreFatturazione preFatturazione;
+	    
+	    
 
-	public void setID(long iD) {
-		ID = iD;
-	}
-	  
-	  
+	    public Viaggio() {
+	        super();
+	    }
+
+	    public long getID() {
+	        return ID;
+	    }
+
+	    public void setID(long iD) {
+	        ID = iD;
+	    }
+
+	    public Fatturazione getFatturazione() {
+	        return fatturazione;
+	    }
+
+	    public void setFatturazione(Fatturazione fatturazione) {
+	        this.fatturazione = fatturazione;
+	    }
+
+		public PreFatturazione getPreFatturazione() {
+			return preFatturazione;
+		}
+
+		public void setPreFatturazione(PreFatturazione preFatturazione) {
+			this.preFatturazione = preFatturazione;
+		}
+
+	
 	  
 	  
 	  

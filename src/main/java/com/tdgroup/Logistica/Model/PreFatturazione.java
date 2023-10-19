@@ -1,12 +1,14 @@
 package com.tdgroup.Logistica.Model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
 
 @Entity
@@ -37,9 +39,9 @@ public class PreFatturazione {
 	    private LocalDateTime scadenzaPrefatturazione;
 
 
-	    @ManyToOne
-	    @JoinColumn(name = "ID_VIAGGIO")
-	    private Viaggio viaggio;
+	    @OneToMany(mappedBy = "preFatturazione") 
+	    private List<Viaggio> viaggi;
+
 
 	    
 	    
@@ -49,15 +51,10 @@ public class PreFatturazione {
 	    
 	    
 	    
-
-		public PreFatturazione() {
-			super();
-		}
-
 
 		public PreFatturazione(String numeroPrefatturazione, LocalDateTime dataPrefatturazione, Double importo,
 				Double penale, Double totale, Long cliente, String fornitore, LocalDateTime scadenzaPrefatturazione,
-				Viaggio viaggio) {
+				List<Viaggio> viaggi) {
 			super();
 			this.numeroPrefatturazione = numeroPrefatturazione;
 			this.dataPrefatturazione = dataPrefatturazione;
@@ -67,9 +64,18 @@ public class PreFatturazione {
 			this.cliente = cliente;
 			this.fornitore = fornitore;
 			this.scadenzaPrefatturazione = scadenzaPrefatturazione;
-			this.viaggio = viaggio;
+			this.viaggi = viaggi;
 		}
 
+
+
+
+		public PreFatturazione() {
+			super();
+		}
+
+
+	
 
 		public String getNumeroPrefatturazione() {
 			return numeroPrefatturazione;
@@ -151,14 +157,21 @@ public class PreFatturazione {
 		}
 
 
-		public Viaggio getViaggio() {
-			return viaggio;
+
+
+		public List<Viaggio> getViaggi() {
+			return viaggi;
 		}
 
 
-		public void setViaggio(Viaggio viaggio) {
-			this.viaggio = viaggio;
+
+
+		public void setViaggi(List<Viaggio> viaggi) {
+			this.viaggi = viaggi;
 		}
+
+
+	
 	    
 	    
 	    

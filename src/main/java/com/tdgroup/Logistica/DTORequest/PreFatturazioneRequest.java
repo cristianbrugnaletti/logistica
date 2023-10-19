@@ -1,6 +1,7 @@
 package com.tdgroup.Logistica.DTORequest;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class PreFatturazioneRequest {
 
@@ -11,7 +12,7 @@ public class PreFatturazioneRequest {
 	private Long cliente;
 	private String fornitore;
 	private LocalDateTime scadenzaPrefatturazione;
-	private Long idViaggio;
+	private List<Long> idViaggio;
 
 
 	public LocalDateTime getDataPrefatturazione() {
@@ -51,12 +52,13 @@ public class PreFatturazioneRequest {
 	public void setScadenzaPrefatturazione(LocalDateTime scadenzaPrefatturazione) {
 		this.scadenzaPrefatturazione = scadenzaPrefatturazione;
 	}
-	public Long getIdViaggio() {
+	public List<Long> getIdViaggio() {
 		return idViaggio;
 	}
-	public void setIdViaggio(Long idViaggio) {
+	public void setIdViaggio(List<Long> idViaggio) {
 		this.idViaggio = idViaggio;
 	}
+	
 
 
 
