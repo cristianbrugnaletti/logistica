@@ -2,8 +2,7 @@ package com.tdgroup.Logistica.Model;
 
 
 import java.time.LocalDateTime;
-
-
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
 
 
@@ -44,9 +44,8 @@ public class Fatturazione {
 	    private String fornitore;
 
 	   
-	    @ManyToOne
-	    @JoinColumn(name = "ID_VIAGGIO")
-	    private Viaggio viaggio;
+	    @OneToMany(mappedBy = "fatturazione") 
+	    private List<Viaggio> viaggi;
 
 	    
 	
@@ -57,13 +56,9 @@ public class Fatturazione {
 	 
 	    
 	
-
-		public Fatturazione() {
-			super();
-		}
 
 		public Fatturazione(String numeroFattura, LocalDateTime dataEmissione, Double importo, Double penale,
-				Double totale, Long cliente, String fornitore, Long idViaggio, Viaggio viaggio) {
+				Double totale, Long cliente, String fornitore, List<Viaggio> viaggi) {
 			super();
 			this.numeroFattura = numeroFattura;
 			this.dataEmissione = dataEmissione;
@@ -72,9 +67,15 @@ public class Fatturazione {
 			this.totale = totale;
 			this.cliente = cliente;
 			this.fornitore = fornitore;
-			this.viaggio = viaggio;
+			this.viaggi = viaggi;
 		}
 
+
+		public Fatturazione() {
+			super();
+		}
+
+	
 		public String getNumeroFattura() {
 			return numeroFattura;
 		}
@@ -130,13 +131,17 @@ public class Fatturazione {
 		}
 
 
-		public Viaggio getViaggio() {
-			return viaggio;
+	
+
+		public List<Viaggio> getViaggi() {
+			return viaggi;
 		}
 
-		public void setViaggio(Viaggio viaggio) {
-			this.viaggio = viaggio;
+
+		public void setViaggi(List<Viaggio> viaggi) {
+			this.viaggi = viaggi;
 		}
+
 
 		public void setNumeroFattura(String numeroFattura) {
 			this.numeroFattura = numeroFattura;

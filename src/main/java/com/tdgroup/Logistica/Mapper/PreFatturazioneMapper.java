@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import com.tdgroup.Logistica.DTOResponse.PreFatturazioneDTO;
 
 import com.tdgroup.Logistica.Model.PreFatturazione;
+import com.tdgroup.Logistica.Model.Viaggio;
 
 @Component
 public class PreFatturazioneMapper {
@@ -23,7 +24,13 @@ public class PreFatturazioneMapper {
 		preFatturazioneDTO.setFornitore(preFatturazione.getFornitore());
 		preFatturazioneDTO.setScadenzaPrefatturazione(preFatturazione.getScadenzaPrefatturazione());
 
-
+		 
+	    List<Long> viaggioID = preFatturazione.getViaggi().stream()
+	            .map(Viaggio::getID)
+	            .collect(Collectors.toList());
+	    
+	    preFatturazioneDTO.setIdViaggio(viaggioID);
+		
 		return preFatturazioneDTO;
 	}
 

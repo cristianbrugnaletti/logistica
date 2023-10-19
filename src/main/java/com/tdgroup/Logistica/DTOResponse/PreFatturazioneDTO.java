@@ -1,6 +1,7 @@
 package com.tdgroup.Logistica.DTOResponse;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class PreFatturazioneDTO {
 	private String numeroPrefatturazione;
@@ -11,6 +12,8 @@ public class PreFatturazioneDTO {
     private Long cliente;
     private String fornitore;
     private LocalDateTime scadenzaPrefatturazione;
+    private List<Long> idViaggio;
+    
 	public String getNumeroPrefatturazione() {
 		return numeroPrefatturazione;
 	}
@@ -58,6 +61,12 @@ public class PreFatturazioneDTO {
 	}
 	public void setScadenzaPrefatturazione(LocalDateTime scadenzaPrefatturazione) {
 		this.scadenzaPrefatturazione = scadenzaPrefatturazione;
+	}
+	public List<Long> getIdViaggio() {
+		return idViaggio;
+	}
+	public void setIdViaggio(List<Long> idViaggio) {
+		this.idViaggio = idViaggio;
 	}
     
     

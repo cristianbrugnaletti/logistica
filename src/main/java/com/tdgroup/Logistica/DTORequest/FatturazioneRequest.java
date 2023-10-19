@@ -1,6 +1,7 @@
 package com.tdgroup.Logistica.DTORequest;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class FatturazioneRequest {
 
@@ -11,7 +12,7 @@ public class FatturazioneRequest {
 	private Double penale;  
 	private Long cliente;
 	private String fornitore;
-	private Long idViaggio;
+	private List<Long> idViaggio;
 
 
 	public LocalDateTime getDataEmissione() {
@@ -45,10 +46,10 @@ public class FatturazioneRequest {
 	public void setFornitore(String fornitore) {
 		this.fornitore = fornitore;
 	}
-	public Long getIdViaggio() {
+	public List<Long> getIdViaggio() {
 		return idViaggio;
 	}
-	public void setIdViaggio(Long idViaggio) {
+	public void setIdViaggio(List<Long> idViaggio) {
 		this.idViaggio = idViaggio;
 	}
 
