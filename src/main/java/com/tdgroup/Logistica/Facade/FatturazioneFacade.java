@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -26,7 +28,8 @@ import com.tdgroup.Logistica.Service.ViaggioService;
 @Service
 public class FatturazioneFacade {
 
-
+	@Autowired
+	ChiamataHttp chiamataHttp;
 	
 	@Autowired
 	FatturazioneService fatturazioneService;
@@ -41,81 +44,6 @@ public class FatturazioneFacade {
 
 	private static final Logger logger = LoggerFactory.getLogger(FatturazioneFacade.class);
 
-	public FatturazioneDTO aggiungiFatturazione(FatturazioneRequest request) {
-	    try {
-	        if (request == null || request.getDataEmissione() == null || request.getImporto() == null ||
-	            request.getPenale() == null || request.getCliente() == null ||
-	            StringUtils.isBlank(request.getFornitore()) || request.getIdViaggio() == null || request.getIdViaggio().isEmpty()) {
-	            logger.error("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
-	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
-	        }
-
-	        LocalDateTime dataEmissione = request.getDataEmissione();
-	        Double importo = request.getImporto();
-	        Double penale = request.getPenale();
-
-	        Long cliente = request.getCliente();
-	        String fornitore = request.getFornitore();
-	        List<Long> idViaggi = request.getIdViaggio();
-	        Double totale = importo + penale;
-
-	        if (importo < 0) {
-	            logger.error("L'importo non può essere negativo");
-	            throw new IllegalArgumentException("L'importo non può essere negativo");
-	        }
-
-	        if (penale < 0) {
-	            logger.error("La penale non può essere negativa");
-	            throw new IllegalArgumentException("La penale non può essere negativa");
-	        }
-
-	        // Crea una nuova istanza di Fatturazione
-	        Fatturazione fatturazione = new Fatturazione();
-	        fatturazione.setDataEmissione(dataEmissione);
-	        fatturazione.setImporto(importo);
-	        fatturazione.setPenale(penale);
-	        fatturazione.setTotale(totale);
-	        fatturazione.setCliente(cliente);
-	        fatturazione.setFornitore(fornitore);
-
-	        String nuovoNumeroFattura = generaNumeroFattura();
-	        logger.info("Nuovo numero di fattura generato: {}", nuovoNumeroFattura);
-	        fatturazione.setNumeroFattura(nuovoNumeroFattura);
-
-	        // Salva la Fatturazione
-	        Fatturazione fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazione);
-
-	        // Crea una lista di Viaggio e assegna la Fatturazione a ciascun Viaggio
-	        List<Viaggio> viaggi = new ArrayList<>();
-	        for (Long idViaggio : idViaggi) {
-	            Optional<Viaggio> viaggioOptional = viaggioService.getViaggioById(idViaggio);
-	            if (!viaggioOptional.isPresent()) {
-	                logger.error("Viaggio non trovato per l'ID specificato: " + idViaggio);
-	                throw new IllegalArgumentException("Viaggio non trovato per l'ID specificato: " + idViaggio);
-	            }
-
-	            Viaggio viaggio = viaggioOptional.get();
-	            viaggio.setFatturazione(fatturazioneAggiunta);
-	            viaggi.add(viaggio);
-	        }
-
-	        // Aggiungi la lista di Viaggio alla Fatturazione
-	        fatturazioneAggiunta.setViaggi(viaggi);
-
-	        // Ora puoi salvare nuovamente la Fatturazione con le associazioni ai Viaggi
-	        fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazioneAggiunta);
-	        logger.info("Fatturazione aggiunta con successo: {}", fatturazioneAggiunta.getNumeroFattura());
-
-	        return fatturazioneMapper.fatturazioneToDTO(fatturazioneAggiunta);
-
-	    } catch (IllegalArgumentException e) {
-	        logger.error("Errore durante l'aggiunta della fatturazione: attributi mancanti o non validi", e);
-	        throw new IllegalArgumentException(e.getMessage());
-	    } catch (Exception e) {
-	        logger.error("Errore imprevisto nell'aggiunta della fatturazione", e);
-	        throw new RuntimeException("Errore imprevisto nell'aggiunta della fatturazione", e);
-	    }
-	}
 
 
 
@@ -215,6 +143,91 @@ public class FatturazioneFacade {
 		}
 	}
 
+	
+	public FatturazioneDTO aggiungiFatturazione(FatturazioneRequest request) {
+	    try {
+	    	
+	        if (request == null || request.getDataEmissione() == null || request.getImporto() == null ||
+	            request.getPenale() == null || request.getCliente() == null ||
+	            StringUtils.isBlank(request.getFornitore()) || (request.getIdViaggio() == null || request.getIdViaggio().isEmpty())) {
+	            logger.error("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
+	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
+	        }
+
+	        LocalDateTime dataEmissione = request.getDataEmissione();
+	        Double importo = request.getImporto();
+	        Double penale = request.getPenale();
+
+	        Double totale = importo + penale;
+
+	        if (!chiamataHttp.verificaEsistenzaFornitoreAsync(request.getFornitore()).join()) {
+	            logger.error("Errore: Il fornitore specificato non esiste. Fornitore: " + request.getFornitore());
+	            throw new IllegalArgumentException("Il fornitore specificato non esiste.");
+	        }
+
+	        String fornitore = request.getFornitore();
+
+	        if (!chiamataHttp.verificaEsistenzaClienteAsync(request.getCliente()).join()) {
+	            logger.error("Errore: Il cliente specificato non esiste. Cliente: " + request.getCliente());
+	            throw new IllegalArgumentException("Il cliente specificato non esiste.");
+	        }
+	        String cliente = request.getCliente();
+
+	        if (importo < 0) {
+	            logger.error("L'importo non può essere negativo");
+	            throw new IllegalArgumentException("L'importo non può essere negativo");
+	        }
+
+	        if (penale < 0) {
+	            logger.error("La penale non può essere negativa");
+	            throw new IllegalArgumentException("La penale non può essere negativa");
+	        }
+
+	        Fatturazione fatturazione = new Fatturazione();
+	        fatturazione.setDataEmissione(dataEmissione);
+	        fatturazione.setImporto(importo);
+	        fatturazione.setPenale(penale);
+	        fatturazione.setTotale(totale);
+	        fatturazione.setCliente(cliente);
+	        fatturazione.setFornitore(fornitore);
+
+	        String nuovoNumeroFattura = generaNumeroFattura();
+	        logger.info("Nuovo numero di fattura generato: {}", nuovoNumeroFattura);
+	        fatturazione.setNumeroFattura(nuovoNumeroFattura);
+
+	        Fatturazione fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazione);
+	        List<Viaggio> viaggi = new ArrayList<>();
+	        for (Long idViaggio : request.getIdViaggio()) {
+	            if (!chiamataHttp.verificaEsistenzaViaggioSingoloAsync(idViaggio).join()) {
+	                logger.error("Errore: Il viaggio specificato non esiste. ID Viaggio: " + idViaggio);
+	                throw new IllegalArgumentException("Il viaggio specificato non esiste.");
+	            }
+
+	            Viaggio viaggio = new Viaggio();
+	            viaggio.setFatturazione(fatturazioneAggiunta);
+	            viaggi.add(viaggio);
+	            viaggioService.aggiungiViaggio(viaggio);
+	        }
+
+	        fatturazioneAggiunta.setViaggi(viaggi);
+
+	        fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazioneAggiunta);
+	        logger.info("Fatturazione aggiunta con successo: {}", fatturazioneAggiunta.getNumeroFattura());
+
+	        return fatturazioneMapper.fatturazioneToDTO(fatturazioneAggiunta);
+
+	    } catch (IllegalArgumentException e) {
+	        logger.error("Errore durante l'aggiunta della fatturazione: attributi mancanti o non validi", e);
+	        throw new IllegalArgumentException(e.getMessage());
+	    } catch (Exception e) {
+	        logger.error("Errore imprevisto nell'aggiunta della fatturazione", e);
+	        throw new RuntimeException("Errore imprevisto nell'aggiunta della fatturazione", e);
+	    }
+	}
 
 
 }
+
+
+
+

@@ -9,7 +9,7 @@ public class PreFatturazioneRequest {
 	private LocalDateTime dataPrefatturazione;
 	private Double importo;
 	private Double penale;
-	private Long cliente;
+	private String cliente;
 	private String fornitore;
 	private LocalDateTime scadenzaPrefatturazione;
 	private List<Long> idViaggio;
@@ -34,10 +34,10 @@ public class PreFatturazioneRequest {
 		this.penale = penale;
 	}
 
-	public Long getCliente() {
+	public String getCliente() {
 		return cliente;
 	}
-	public void setCliente(Long cliente) {
+	public void setCliente(String cliente) {
 		this.cliente = cliente;
 	}
 	public String getFornitore() {

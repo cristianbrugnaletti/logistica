@@ -3,6 +3,8 @@ package com.tdgroup.Logistica.DTORequest;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class FatturazioneRequest {
 
 
@@ -10,7 +12,7 @@ public class FatturazioneRequest {
 	private LocalDateTime dataEmissione;
 	private Double importo;
 	private Double penale;  
-	private Long cliente;
+	private String cliente;
 	private String fornitore;
 	private List<Long> idViaggio;
 
@@ -34,10 +36,10 @@ public class FatturazioneRequest {
 		this.penale = penale;
 	}
 
-	public Long getCliente() {
+	public String getCliente() {
 		return cliente;
 	}
-	public void setCliente(Long cliente) {
+	public void setCliente(String cliente) {
 		this.cliente = cliente;
 	}
 	public String getFornitore() {
@@ -52,6 +54,7 @@ public class FatturazioneRequest {
 	public void setIdViaggio(List<Long> idViaggio) {
 		this.idViaggio = idViaggio;
 	}
+
 
 
 

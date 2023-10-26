@@ -7,8 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.tdgroup.Logistica.Model.Fatturazione;
+import com.tdgroup.Logistica.Model.Viaggio;
 import com.tdgroup.Logistica.Repository.FatturazioneRepository;
+import com.tdgroup.Logistica.Repository.ViaggioRepository;
 import com.tdgroup.Logistica.Service.FatturazioneService;
+import com.tdgroup.Logistica.Service.ViaggioService;
 
 @Service
 public class FatturazioneServiceImpl implements FatturazioneService {
@@ -16,6 +19,11 @@ public class FatturazioneServiceImpl implements FatturazioneService {
 	@Autowired
 	FatturazioneRepository fatturazioneRepository;
 	
+	@Autowired
+	ViaggioRepository viaggioRepository;
+	
+	@Autowired
+	ViaggioService viaggioService;
 	
 	@Override
 	public Fatturazione aggiungiFatturazione(Fatturazione fatturazione) {
@@ -48,5 +56,14 @@ public class FatturazioneServiceImpl implements FatturazioneService {
 		return fatturazioneRepository.findByNumeroFattura(numeroFattura);
 	}
 
+
+
+
+
+
+
 	
+
+
+
 }

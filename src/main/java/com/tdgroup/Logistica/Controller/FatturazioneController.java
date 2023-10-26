@@ -30,7 +30,7 @@ import com.tdgroup.Logistica.GestioneRisposte.Risposte;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/fatturazione")
+//@RequestMapping("/fatturazione")
 public class FatturazioneController {
 
 	private static final Logger logger = LoggerFactory.getLogger(FatturazioneController.class);
