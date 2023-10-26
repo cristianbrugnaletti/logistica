@@ -16,7 +16,7 @@ import com.tdgroup.Logistica.Model.Fatturazione;
 import com.tdgroup.Logistica.Model.PreFatturazione;
 import com.tdgroup.Logistica.Model.Viaggio;
 import com.tdgroup.Logistica.Repository.PreFatturazioneRepository;
-
+import com.tdgroup.Logistica.Service.ChiamataHttp;
 import com.tdgroup.Logistica.Service.PreFatturazioneService;
 import com.tdgroup.Logistica.Service.ViaggioService;
 
@@ -30,7 +30,8 @@ import org.slf4j.LoggerFactory;
 
 @Service
 public class PreFatturazioneFacade {
-
+@Autowired
+ChiamataHttp chiamataHttp;
 
 	@Autowired
 	PreFatturazioneService preFatturazioneService;
@@ -47,77 +48,87 @@ public class PreFatturazioneFacade {
 
 	public PreFatturazioneDTO aggiungiPreFatturazione(PreFatturazioneRequest request) {
 	    try {
-	    	   if (request == null || request.getDataPrefatturazione() == null || request.getImporto() == null ||
-	   	            request.getPenale() == null || request.getCliente() == null ||
-	   	            StringUtils.isBlank(request.getFornitore()) || request.getIdViaggio() == null || request.getIdViaggio().isEmpty()) {
-	   	            logger.error("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
-	   	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
-	   	        }
+	        if (request == null || request.getDataPrefatturazione() == null || request.getImporto() == null ||
+	            request.getPenale() == null || request.getCliente() == null ||
+	            StringUtils.isBlank(request.getFornitore()) || (request.getIdViaggio() == null || request.getIdViaggio().isEmpty())) {
+	            logger.error("Attributi mancanti o non validi nella richiesta di aggiunta prefatturazione");
+	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta prefatturazione");
+	        }
 
-	   	        LocalDateTime dataPrefatturazione = request.getDataPrefatturazione();
-	   	        Double importo = request.getImporto();
-	   	        Double penale = request.getPenale();
-	   	        LocalDateTime scadenzaPrefatturazione = request.getScadenzaPrefatturazione();
-	   	        Long cliente = request.getCliente();
-	   	        String fornitore = request.getFornitore();
-	   	        List<Long> idViaggi = request.getIdViaggio();
-	   	        Double totale = importo + penale;
+	        LocalDateTime dataPrefatturazione = request.getDataPrefatturazione();
+	        Double importo = request.getImporto();
+	        Double penale = request.getPenale();
 
-	   	        if (importo < 0) {
-	   	            logger.error("L'importo non può essere negativo");
-	   	            throw new IllegalArgumentException("L'importo non può essere negativo");
-	   	        }
+	        Double totale = importo + penale;
 
-	   	        if (penale < 0) {
-	   	            logger.error("La penale non può essere negativa");
-	   	            throw new IllegalArgumentException("La penale non può essere negativa");
-	   	        }
+	        if (importo < 0) {
+	            logger.error("L'importo non può essere negativo");
+	            throw new IllegalArgumentException("L'importo non può essere negativo");
+	        }
 
-	   	        // Crea una nuova istanza di Fatturazione
-	   	        PreFatturazione preFatturazione = new PreFatturazione();
-	   	        preFatturazione.setDataPrefatturazione(dataPrefatturazione);
-	   	        preFatturazione.setImporto(importo);
-	   	        preFatturazione.setPenale(penale);
-	   	        preFatturazione.setTotale(totale);
-	   	        preFatturazione.setCliente(cliente);
-	   	        preFatturazione.setFornitore(fornitore);
-	   	        preFatturazione.setScadenzaPrefatturazione(scadenzaPrefatturazione);
-	   	        String nuovoNumeroFattura = generaNumeroPreFatturazione();
-	   	        logger.info("Nuovo numero di fattura generato: {}", nuovoNumeroFattura);
-	   	        preFatturazione.setNumeroPrefatturazione(nuovoNumeroFattura);
+	        if (penale < 0) {
+	            logger.error("La penale non può essere negativa");
+	            throw new IllegalArgumentException("La penale non può essere negativa");
+	        }
 
-	   	        // Salva la Fatturazione
-	   	        PreFatturazione preFatturazioneAggiunta = preFatturazioneService.aggiungiPreFatturazione(preFatturazione);
+	        // Effettua la chiamata HTTP per verificare l'esistenza del fornitore
+	        if (!chiamataHttp.verificaEsistenzaFornitoreAsync(request.getFornitore()).join()) {
+	            logger.error("Errore: Il fornitore specificato non esiste. Fornitore: " + request.getFornitore());
+	            throw new IllegalArgumentException("Il fornitore specificato non esiste.");
+	        }
 
-	   	        // Crea una lista di Viaggio e assegna la Fatturazione a ciascun Viaggio
-	   	        List<Viaggio> viaggi = new ArrayList<>();
-	   	        for (Long idViaggio : idViaggi) {
-	   	            Optional<Viaggio> viaggioOptional = viaggioService.getViaggioById(idViaggio);
-	   	            if (!viaggioOptional.isPresent()) {
-	   	                logger.error("Viaggio non trovato per l'ID specificato: " + idViaggio);
-	   	                throw new IllegalArgumentException("Viaggio non trovato per l'ID specificato: " + idViaggio);
-	   	            }
+	        String fornitore = request.getFornitore();
 
-	   	            Viaggio viaggio = viaggioOptional.get();
-	   	            viaggio.setPreFatturazione(preFatturazioneAggiunta);
-	   	            viaggi.add(viaggio);
-	   	        }
+	        // Effettua la chiamata HTTP per verificare l'esistenza del cliente
+	        if (!chiamataHttp.verificaEsistenzaClienteAsync(request.getCliente()).join()) {
+	            logger.error("Errore: Il cliente specificato non esiste. Cliente: " + request.getCliente());
+	            throw new IllegalArgumentException("Il cliente specificato non esiste.");
+	        }
+	        String cliente = request.getCliente();
 
-	   	        // Aggiungi la lista di Viaggio alla Fatturazione
-	   	        preFatturazioneAggiunta.setViaggi(viaggi);
+	        PreFatturazione preFatturazione = new PreFatturazione();
+	        preFatturazione.setDataPrefatturazione(dataPrefatturazione);
+	        preFatturazione.setImporto(importo);
+	        preFatturazione.setPenale(penale);
+	        preFatturazione.setTotale(totale);
+	        preFatturazione.setCliente(cliente);
+	        preFatturazione.setFornitore(fornitore);
 
-	   	        // Ora puoi salvare nuovamente la Fatturazione con le associazioni ai Viaggi
-	   	        preFatturazioneAggiunta = preFatturazioneService.aggiungiPreFatturazione(preFatturazioneAggiunta);
-	   	        logger.info("Fatturazione aggiunta con successo: {}", preFatturazioneAggiunta.getNumeroPrefatturazione());
+	        // Altre operazioni specifiche della prefatturazione
 
-	   	        return preFatturazioneMapper.preFatturazioneToDTO(preFatturazioneAggiunta);
+	        // Effettua la chiamata HTTP per generare il nuovo numero di prefatturazione
+	        String nuovoNumeroPrefatturazione = generaNumeroPreFatturazione();
+	        logger.info("Nuovo numero di prefatturazione generato: {}", nuovoNumeroPrefatturazione);
+	        preFatturazione.setNumeroPrefatturazione(nuovoNumeroPrefatturazione);
+
+	        PreFatturazione preFatturazioneAggiunta = preFatturazioneService.aggiungiPreFatturazione(preFatturazione);
+
+	        // Effettua le chiamate HTTP per verificare l'esistenza dei viaggi
+	        List<Viaggio> viaggi = new ArrayList<>();
+	        for (Long idViaggio : request.getIdViaggio()) {
+	            if (!chiamataHttp.verificaEsistenzaViaggioSingoloAsync(idViaggio).join()) {
+	                logger.error("Errore: Il viaggio specificato non esiste. ID Viaggio: " + idViaggio);
+	                throw new IllegalArgumentException("Il viaggio specificato non esiste.");
+	            }
+
+	            Viaggio viaggio = new Viaggio();
+	            viaggio.setPreFatturazione(preFatturazioneAggiunta);
+	            viaggi.add(viaggio);
+	            viaggioService.aggiungiViaggio(viaggio);
+	        }
+	        preFatturazioneAggiunta.setViaggi(viaggi);
+
+	        preFatturazioneAggiunta = preFatturazioneService.aggiungiPreFatturazione(preFatturazioneAggiunta);
+	        logger.info("Prefatturazione aggiunta con successo: {}", preFatturazioneAggiunta.getNumeroPrefatturazione());
+
+	        return preFatturazioneMapper.preFatturazioneToDTO(preFatturazioneAggiunta);
 
 	    } catch (IllegalArgumentException e) {
-	        logger.error("Errore durante l'aggiunta della pre-fatturazione: attributi mancanti o non validi", e);
+	        logger.error("Errore durante l'aggiunta della prefatturazione: attributi mancanti o non validi", e);
 	        throw new IllegalArgumentException(e.getMessage());
 	    } catch (Exception e) {
-	        logger.error("Errore imprevisto nell'aggiunta della pre-fatturazione", e);
-	        throw new RuntimeException("Errore imprevisto nell'aggiunta della pre-fatturazione", e);
+	        logger.error("Errore imprevisto nell'aggiunta della prefatturazione", e);
+	        throw new RuntimeException("Errore imprevisto nell'aggiunta della prefatturazione", e);
 	    }
 	}
 
@@ -205,7 +216,7 @@ public class PreFatturazioneFacade {
 	        LocalDateTime dataPrefatturazione = request.getDataPrefatturazione();
 	        Double importo = request.getImporto();
 	        Double penale = request.getPenale();
-	        Long cliente = request.getCliente();
+	        String cliente = request.getCliente();
 	        String fornitore = request.getFornitore();
 	        List<Long> idViaggi = request.getIdViaggio();
 	        LocalDateTime scadenzaPreFatturazione = request.getScadenzaPrefatturazione();

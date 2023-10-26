@@ -22,4 +22,10 @@ public class ViaggioServiceImpl implements ViaggioService{
 		return viaggioRepository.findById(id);
 	}
 
+
+	@Override
+	public Viaggio aggiungiViaggio(Viaggio viaggio) {
+		 return viaggioRepository.save(viaggio);
+	}
+
 }

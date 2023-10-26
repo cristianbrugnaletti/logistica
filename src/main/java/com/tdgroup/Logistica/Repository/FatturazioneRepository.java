@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.tdgroup.Logistica.Model.Fatturazione;
+import com.tdgroup.Logistica.Model.Viaggio;
 
 
 public interface FatturazioneRepository extends JpaRepository<Fatturazione, Long>{
@@ -15,4 +16,9 @@ public interface FatturazioneRepository extends JpaRepository<Fatturazione, Long
 	
 	 @Query("SELECT MAX(CAST(SUBSTRING(f.numeroFattura, 3, 7) AS Long)) FROM Fatturazione f WHERE SUBSTRING(f.numeroFattura, 1, 2) = :prefisso")
 	 Long findLastNumeroFatturaByPrefix(@Param("prefisso") String prefisso);
+	 
+	 
+	
+	 
+	
 }

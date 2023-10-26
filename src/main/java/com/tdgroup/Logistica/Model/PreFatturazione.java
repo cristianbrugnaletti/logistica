@@ -30,7 +30,7 @@ public class PreFatturazione {
 	    private Double totale;
 
 	    @Column(name = "CLIENTE")
-	    private Long cliente;
+	    private String cliente;
 
 	    @Column(name = "FORNITORE")
 	    private String fornitore;
@@ -53,7 +53,7 @@ public class PreFatturazione {
 	    
 
 		public PreFatturazione(String numeroPrefatturazione, LocalDateTime dataPrefatturazione, Double importo,
-				Double penale, Double totale, Long cliente, String fornitore, LocalDateTime scadenzaPrefatturazione,
+				Double penale, Double totale, String cliente, String fornitore, LocalDateTime scadenzaPrefatturazione,
 				List<Viaggio> viaggi) {
 			super();
 			this.numeroPrefatturazione = numeroPrefatturazione;
@@ -127,12 +127,12 @@ public class PreFatturazione {
 		}
 
 
-		public Long getCliente() {
+		public String getCliente() {
 			return cliente;
 		}
 
 
-		public void setCliente(Long cliente) {
+		public void setCliente(String cliente) {
 			this.cliente = cliente;
 		}
 

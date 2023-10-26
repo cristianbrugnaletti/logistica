@@ -38,7 +38,7 @@ public class Fatturazione {
 	    private Double totale;
 
 	    @Column(name = "CLIENTE")
-	    private Long cliente;
+	    private String cliente;
 
 	    @Column(name = "FORNITORE")
 	    private String fornitore;
@@ -58,7 +58,7 @@ public class Fatturazione {
 	
 
 		public Fatturazione(String numeroFattura, LocalDateTime dataEmissione, Double importo, Double penale,
-				Double totale, Long cliente, String fornitore, List<Viaggio> viaggi) {
+				Double totale, String cliente, String fornitore, List<Viaggio> viaggi) {
 			super();
 			this.numeroFattura = numeroFattura;
 			this.dataEmissione = dataEmissione;
@@ -114,11 +114,11 @@ public class Fatturazione {
 			this.totale = totale;
 		}
 
-		public Long getCliente() {
+		public String getCliente() {
 			return cliente;
 		}
 
-		public void setCliente(Long cliente) {
+		public void setCliente(String cliente) {
 			this.cliente = cliente;
 		}
 

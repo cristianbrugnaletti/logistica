@@ -6,6 +6,7 @@ import java.util.Optional;
 
 
 import com.tdgroup.Logistica.Model.Fatturazione;
+import com.tdgroup.Logistica.Model.Viaggio;
 
 public interface FatturazioneService {
 
@@ -14,4 +15,7 @@ public interface FatturazioneService {
 	Optional<Fatturazione> findFatturazione(String numeroFatturazione);
 	List<Fatturazione>findAll();
 	Optional<Fatturazione>findFatturaByNumeroFattura(String numeroFattura);
+	
+	
+	 
 }

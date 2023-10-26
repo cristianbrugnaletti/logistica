@@ -9,7 +9,7 @@ public class FatturazioneDTO {
     private Double importo;
     private Double penale;
     private Double totale;
-    private Long cliente;
+    private String cliente;
     private String fornitore;
     private List<Long> idViaggio;
     
@@ -45,10 +45,10 @@ public class FatturazioneDTO {
 	public void setTotale(Double totale) {
 		this.totale = totale;
 	}
-	public Long getCliente() {
+	public String getCliente() {
 		return cliente;
 	}
-	public void setCliente(Long cliente) {
+	public void setCliente(String cliente) {
 		this.cliente = cliente;
 	}
 	public String getFornitore() {
