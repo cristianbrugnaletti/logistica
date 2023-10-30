@@ -15,4 +15,7 @@ public interface PreFatturazioneRepository extends JpaRepository<PreFatturazione
 	Long findLastNumeroPreFatturaByPrefix(@Param("prefisso") String prefisso);
 
 	Optional<PreFatturazione> findByNumeroPrefatturazione(String numeroPrefatturazione);
+	
+	
+
 }

@@ -41,10 +41,10 @@ public class FatturazioneController {
 	FatturazioneFacade fatturazioneFacade;
 
 	   @PostMapping("/aggiungiFattura")
-	    public ResponseEntity<Object> aggiungiFattura(@RequestBody @Valid FatturazioneRequest request) {
+	    public ResponseEntity<Object> aggiungiFattura(@RequestBody @Valid FatturazioneRequest request, String numeroPreFatturazione) {
 	        logger.info("Richiesta ricevuta per aggiungere una nuova fattura.");
 	        try {
-	            fatturazioneFacade.aggiungiFatturazione(request);
+	            fatturazioneFacade.aggiungiFatturazione(request,numeroPreFatturazione);
 	            logger.info("Fattura aggiunta con successo.");
 
 	            return ResponseEntity.ok(Risposte.SuccessResponse("Fattura aggiunta con successo", "/aggiungiFattura"));

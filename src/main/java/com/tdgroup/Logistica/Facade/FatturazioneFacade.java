@@ -16,13 +16,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.tdgroup.Logistica.DTORequest.FatturazioneRequest;
+import com.tdgroup.Logistica.DTORequest.PreFatturazioneRequest;
 import com.tdgroup.Logistica.DTOResponse.FatturazioneDTO;
 import com.tdgroup.Logistica.Mapper.FatturazioneMapper;
 import com.tdgroup.Logistica.Model.Fatturazione;
+import com.tdgroup.Logistica.Model.PreFatturazione;
 import com.tdgroup.Logistica.Model.Viaggio;
 import com.tdgroup.Logistica.Repository.FatturazioneRepository;
 import com.tdgroup.Logistica.Service.ChiamataHttp;
 import com.tdgroup.Logistica.Service.FatturazioneService;
+import com.tdgroup.Logistica.Service.PreFatturazioneService;
 import com.tdgroup.Logistica.Service.ViaggioService;
 
 @Service
@@ -41,6 +44,9 @@ public class FatturazioneFacade {
 
 	@Autowired
 	ViaggioService viaggioService;
+	
+	@Autowired
+	PreFatturazioneService preFatturazioneService;
 
 	private static final Logger logger = LoggerFactory.getLogger(FatturazioneFacade.class);
 
@@ -143,87 +149,85 @@ public class FatturazioneFacade {
 		}
 	}
 
-	
-	public FatturazioneDTO aggiungiFatturazione(FatturazioneRequest request) {
+	public FatturazioneDTO aggiungiFatturazione(FatturazioneRequest request, String numeroPrefatturazione) {
 	    try {
-	    	
-	        if (request == null || request.getDataEmissione() == null || request.getImporto() == null ||
-	            request.getPenale() == null || request.getCliente() == null ||
-	            StringUtils.isBlank(request.getFornitore()) || (request.getIdViaggio() == null || request.getIdViaggio().isEmpty())) {
+	        logger.info("Inizio procedura di aggiunta di fatturazione.");
+
+	        // Verifica che i dati nella richiesta siano validi
+	        if (request == null || request.getDataEmissione() == null) {
 	            logger.error("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
 	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta fatturazione");
 	        }
+	        
+	        logger.info("Dati richiesta validati con successo.");
 
-	        LocalDateTime dataEmissione = request.getDataEmissione();
-	        Double importo = request.getImporto();
-	        Double penale = request.getPenale();
+	        // Esegui una query per ottenere i dati della prefattura dal tuo database
+	        Optional<PreFatturazione> prefattura = preFatturazioneService.findPreFatturazione(numeroPrefatturazione);
 
-	        Double totale = importo + penale;
+	        if (!prefattura.isPresent()) {
+	            logger.error("Errore: La prefattura specificata non esiste. Numero Prefatturazione: " + numeroPrefatturazione);
+	            throw new IllegalArgumentException("La prefattura specificata non esiste.");
+	        }
+	        
+	        logger.info("Prefatturazione trovata con successo.");
 
-	        if (!chiamataHttp.verificaEsistenzaFornitoreAsync(request.getFornitore()).join()) {
-	            logger.error("Errore: Il fornitore specificato non esiste. Fornitore: " + request.getFornitore());
-	            throw new IllegalArgumentException("Il fornitore specificato non esiste.");
+	        // Estrai i dati dalla prefatturazione
+	        PreFatturazione preFatturazione = prefattura.get();
+
+	        // Controlla se la prefatturazione è già stata fatturata
+	        if (preFatturazione.isFatturato()) {
+	            logger.error("Errore: La prefatturazione è già stata fatturata. Numero Prefatturazione: " + numeroPrefatturazione);
+	            throw new IllegalArgumentException("La prefatturazione è già stata fatturata.");
 	        }
 
-	        String fornitore = request.getFornitore();
+	        logger.info("Prefatturazione non ancora fatturata.");
 
-	        if (!chiamataHttp.verificaEsistenzaClienteAsync(request.getCliente()).join()) {
-	            logger.error("Errore: Il cliente specificato non esiste. Cliente: " + request.getCliente());
-	            throw new IllegalArgumentException("Il cliente specificato non esiste.");
-	        }
-	        String cliente = request.getCliente();
-
-	        if (importo < 0) {
-	            logger.error("L'importo non può essere negativo");
-	            throw new IllegalArgumentException("L'importo non può essere negativo");
-	        }
-
-	        if (penale < 0) {
-	            logger.error("La penale non può essere negativa");
-	            throw new IllegalArgumentException("La penale non può essere negativa");
-	        }
-
+	        // Crea una nuova istanza di Fatturazione e imposta i dati
 	        Fatturazione fatturazione = new Fatturazione();
-	        fatturazione.setDataEmissione(dataEmissione);
-	        fatturazione.setImporto(importo);
-	        fatturazione.setPenale(penale);
-	        fatturazione.setTotale(totale);
-	        fatturazione.setCliente(cliente);
-	        fatturazione.setFornitore(fornitore);
+	        fatturazione.setDataEmissione(request.getDataEmissione());
+	        fatturazione.setImporto(preFatturazione.getImporto());
+	        fatturazione.setPenale(preFatturazione.getPenale());
+	        fatturazione.setTotale(preFatturazione.getTotale());
+	        fatturazione.setCliente(preFatturazione.getCliente());
+	        fatturazione.setFornitore(preFatturazione.getFornitore());
 
+	        // Genera un nuovo numero di fattura
 	        String nuovoNumeroFattura = generaNumeroFattura();
 	        logger.info("Nuovo numero di fattura generato: {}", nuovoNumeroFattura);
 	        fatturazione.setNumeroFattura(nuovoNumeroFattura);
 
+	        // Aggiungi la nuova fatturazione al database
 	        Fatturazione fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazione);
-	        List<Viaggio> viaggi = new ArrayList<>();
-	        for (Long idViaggio : request.getIdViaggio()) {
-	            if (!chiamataHttp.verificaEsistenzaViaggioSingoloAsync(idViaggio).join()) {
-	                logger.error("Errore: Il viaggio specificato non esiste. ID Viaggio: " + idViaggio);
-	                throw new IllegalArgumentException("Il viaggio specificato non esiste.");
-	            }
+	        logger.info("Fatturazione aggiunta al database con successo.");
 
-	            Viaggio viaggio = new Viaggio();
+	        // Copia e disassocia i viaggi dalla prefatturazione
+	        List<Viaggio> viaggi = new ArrayList<>(preFatturazione.getViaggi());
+	        preFatturazione.getViaggi().clear();
+
+	        // Associa i viaggi alla nuova fattura
+	        for (Viaggio viaggio : viaggi) {
 	            viaggio.setFatturazione(fatturazioneAggiunta);
-	            viaggi.add(viaggio);
 	            viaggioService.aggiungiViaggio(viaggio);
 	        }
-
+	        preFatturazione.setFatturato(true);
 	        fatturazioneAggiunta.setViaggi(viaggi);
-
+	        // Aggiungi la fatturazione con i viaggi associati al database
 	        fatturazioneAggiunta = fatturazioneService.aggiungiFatturazione(fatturazioneAggiunta);
+	        logger.info("Fatturazione associata ai viaggi e aggiornata nel database.");
+
 	        logger.info("Fatturazione aggiunta con successo: {}", fatturazioneAggiunta.getNumeroFattura());
 
 	        return fatturazioneMapper.fatturazioneToDTO(fatturazioneAggiunta);
 
 	    } catch (IllegalArgumentException e) {
-	        logger.error("Errore durante l'aggiunta della fatturazione: attributi mancanti o non validi", e);
+	        logger.error("Errore durante l'aggiunta della fatturazione: " + e.getMessage(), e);
 	        throw new IllegalArgumentException(e.getMessage());
 	    } catch (Exception e) {
 	        logger.error("Errore imprevisto nell'aggiunta della fatturazione", e);
 	        throw new RuntimeException("Errore imprevisto nell'aggiunta della fatturazione", e);
 	    }
 	}
+
 
 
 }

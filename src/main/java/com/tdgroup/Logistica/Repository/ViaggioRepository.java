@@ -10,5 +10,5 @@ import com.tdgroup.Logistica.Model.Viaggio;
 
 public interface ViaggioRepository extends JpaRepository<Viaggio, Long>{
 
-	
+	Long countByIdViaggioEsterno(Long idViaggioEsterno);
 }

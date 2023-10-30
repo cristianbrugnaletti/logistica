@@ -16,6 +16,7 @@ import com.tdgroup.Logistica.Model.Fatturazione;
 import com.tdgroup.Logistica.Model.PreFatturazione;
 import com.tdgroup.Logistica.Model.Viaggio;
 import com.tdgroup.Logistica.Repository.PreFatturazioneRepository;
+import com.tdgroup.Logistica.Repository.ViaggioRepository;
 import com.tdgroup.Logistica.Service.ChiamataHttp;
 import com.tdgroup.Logistica.Service.PreFatturazioneService;
 import com.tdgroup.Logistica.Service.ViaggioService;
@@ -43,22 +44,44 @@ ChiamataHttp chiamataHttp;
 
 	@Autowired
 	ViaggioService viaggioService;
+	
+
+	@Autowired
+	ViaggioRepository viaggioRepository;
 
 	private static final Logger logger = LoggerFactory.getLogger(PreFatturazioneFacade.class);
 
 	public PreFatturazioneDTO aggiungiPreFatturazione(PreFatturazioneRequest request) {
+		
+	    List<Long> viaggiConPrefatturazioneEsistente = new ArrayList<>();
+
+	    for (Long idViaggio : request.getIdViaggio()) {
+	        if (verificaEsistenzaPrefatturazionePerViaggioEsterno(idViaggio)) {
+	            viaggiConPrefatturazioneEsistente.add(idViaggio);
+	        }
+	        
+	        // Altre operazioni per aggiungere il viaggio alla prefatturazione
+	    }
+
+	    if (!viaggiConPrefatturazioneEsistente.isEmpty()) {
+	        logger.error("Errore: Esiste già una prefatturazione per i seguenti viaggi esterni con ID: " + viaggiConPrefatturazioneEsistente);
+	        throw new IllegalArgumentException("Esiste già una prefatturazione per i seguenti viaggi esterni: " + viaggiConPrefatturazioneEsistente);
+	    }
+		
 	    try {
-	        if (request == null || request.getDataPrefatturazione() == null || request.getImporto() == null ||
+	        if (request == null || request.getImporto() == null ||
 	            request.getPenale() == null || request.getCliente() == null ||
 	            StringUtils.isBlank(request.getFornitore()) || (request.getIdViaggio() == null || request.getIdViaggio().isEmpty())) {
 	            logger.error("Attributi mancanti o non validi nella richiesta di aggiunta prefatturazione");
 	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di aggiunta prefatturazione");
 	        }
+	        
+	    
 
-	        LocalDateTime dataPrefatturazione = request.getDataPrefatturazione();
+	        LocalDateTime dataPrefatturazione = LocalDateTime.now();
 	        Double importo = request.getImporto();
 	        Double penale = request.getPenale();
-
+	        LocalDateTime scadenzaPrefatturazione = request.getScadenzaPrefatturazione();
 	        Double totale = importo + penale;
 
 	        if (importo < 0) {
@@ -93,7 +116,7 @@ ChiamataHttp chiamataHttp;
 	        preFatturazione.setTotale(totale);
 	        preFatturazione.setCliente(cliente);
 	        preFatturazione.setFornitore(fornitore);
-
+	        preFatturazione.setScadenzaPrefatturazione(scadenzaPrefatturazione);
 	        // Altre operazioni specifiche della prefatturazione
 
 	        // Effettua la chiamata HTTP per generare il nuovo numero di prefatturazione
@@ -113,6 +136,7 @@ ChiamataHttp chiamataHttp;
 
 	            Viaggio viaggio = new Viaggio();
 	            viaggio.setPreFatturazione(preFatturazioneAggiunta);
+	            viaggio.setIdViaggioEsterno(idViaggio);
 	            viaggi.add(viaggio);
 	            viaggioService.aggiungiViaggio(viaggio);
 	        }
@@ -133,6 +157,13 @@ ChiamataHttp chiamataHttp;
 	}
 
 
+	
+	  public boolean verificaEsistenzaPrefatturazionePerViaggioEsterno(Long idViaggioEsterno) {
+	        Long count = viaggioRepository.countByIdViaggioEsterno(idViaggioEsterno);
+	        return count > 0;
+	    }
+	
+	
 
 
 	public String generaNumeroPreFatturazione() {
@@ -195,7 +226,7 @@ ChiamataHttp chiamataHttp;
 
 	        // Step 1: Verifica della validità della richiesta
 	        if (request == null ||
-	            request.getDataPrefatturazione() == null ||
+	            
 	            request.getScadenzaPrefatturazione() == null ||
 	            request.getImporto() == null ||
 	            request.getPenale() == null ||
@@ -213,7 +244,7 @@ ChiamataHttp chiamataHttp;
 	            .orElseThrow(() -> new IllegalArgumentException("La pre-fatturazione " + numeroPrefatturazione + " non esiste"));
 
 	        // Step 3: Validazione dei dati
-	        LocalDateTime dataPrefatturazione = request.getDataPrefatturazione();
+	        LocalDateTime dataPrefatturazione = LocalDateTime.now();
 	        Double importo = request.getImporto();
 	        Double penale = request.getPenale();
 	        String cliente = request.getCliente();

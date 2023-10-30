@@ -5,8 +5,8 @@ import java.util.List;
 
 public class PreFatturazioneRequest {
 
-
-	private LocalDateTime dataPrefatturazione;
+	
+	
 	private Double importo;
 	private Double penale;
 	private String cliente;
@@ -15,12 +15,7 @@ public class PreFatturazioneRequest {
 	private List<Long> idViaggio;
 
 
-	public LocalDateTime getDataPrefatturazione() {
-		return dataPrefatturazione;
-	}
-	public void setDataPrefatturazione(LocalDateTime dataPrefatturazione) {
-		this.dataPrefatturazione = dataPrefatturazione;
-	}
+
 	public Double getImporto() {
 		return importo;
 	}
@@ -58,6 +53,7 @@ public class PreFatturazioneRequest {
 	public void setIdViaggio(List<Long> idViaggio) {
 		this.idViaggio = idViaggio;
 	}
+
 	
 
 
