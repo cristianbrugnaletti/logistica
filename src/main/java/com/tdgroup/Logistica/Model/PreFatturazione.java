@@ -3,6 +3,8 @@ package com.tdgroup.Logistica.Model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.ColumnDefault;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -38,7 +40,10 @@ public class PreFatturazione {
 	    @Column(name = "SCADENZA_PREFATTURAZIONE")
 	    private LocalDateTime scadenzaPrefatturazione;
 
-
+	    @Column(name="fatturato")
+	    @ColumnDefault("false")
+	    private boolean fatturato;
+	    
 	    @OneToMany(mappedBy = "preFatturazione") 
 	    private List<Viaggio> viaggi;
 
@@ -52,9 +57,13 @@ public class PreFatturazione {
 	    
 	    
 
+
+
+
+
 		public PreFatturazione(String numeroPrefatturazione, LocalDateTime dataPrefatturazione, Double importo,
 				Double penale, Double totale, String cliente, String fornitore, LocalDateTime scadenzaPrefatturazione,
-				List<Viaggio> viaggi) {
+				boolean fatturato, List<Viaggio> viaggi) {
 			super();
 			this.numeroPrefatturazione = numeroPrefatturazione;
 			this.dataPrefatturazione = dataPrefatturazione;
@@ -64,6 +73,7 @@ public class PreFatturazione {
 			this.cliente = cliente;
 			this.fornitore = fornitore;
 			this.scadenzaPrefatturazione = scadenzaPrefatturazione;
+			this.fatturato = false;
 			this.viaggi = viaggi;
 		}
 
@@ -168,6 +178,20 @@ public class PreFatturazione {
 
 		public void setViaggi(List<Viaggio> viaggi) {
 			this.viaggi = viaggi;
+		}
+
+
+
+
+		public boolean isFatturato() {
+			return fatturato;
+		}
+
+
+
+
+		public void setFatturato(boolean fatturato) {
+			this.fatturato = fatturato;
 		}
 
 
