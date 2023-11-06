@@ -8,6 +8,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.tdgroup.Logistica.DTORequest.PreFatturazioneRequest;
 import com.tdgroup.Logistica.DTOResponse.FatturazioneDTO;
 import com.tdgroup.Logistica.DTOResponse.PreFatturazioneDTO;
@@ -220,7 +222,7 @@ ChiamataHttp chiamataHttp;
     }
 
 
-	public PreFatturazioneDTO modificaPreFatturazione(String numeroPrefatturazione, PreFatturazioneRequest request) {
+	public PreFatturazioneDTO modificaPreFatturazione(String numeroPrefatturazione, PreFatturazioneRequest request, LocalDateTime nuovaScadenzaPrefatturazione) {
 	    try {
 	        logger.info("Inizio elaborazione richiesta di modifica pre-fatturazione");
 
@@ -290,7 +292,7 @@ ChiamataHttp chiamataHttp;
 
 	        // Step 6: Salvataggio delle modifiche
 	        logger.info("Salva le modifiche alla pre-fatturazione");
-	        PreFatturazione preFatturazioneModificata = preFatturazioneService.modificaPreFatturazione(preFatturazioneEsistente);
+	        PreFatturazione preFatturazioneModificata = preFatturazioneService.modificaPreFatturazione(preFatturazioneEsistente, scadenzaPreFatturazione);
 
 	        // Step 7: Conversione dell'entità modificata in un DTO
 	        logger.info("Conversione della pre-fatturazione modificata in DTO");
@@ -367,6 +369,32 @@ ChiamataHttp chiamataHttp;
 			logger.error("Errore durante la ricerca della prefatturazione con il numero di prefattura: {}", numeroPreFatturazione, e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Errore durante la ricerca della prefatturazione", e);
 		}
+	}
+	
+	
+	public List<PreFatturazioneDTO> findPrefatturazioniByFiltri(String numeroPrefatturazione, LocalDateTime dataPrefatturazione, Double totale, LocalDateTime scadenzaPrefatturazione, Boolean fatturato, String cliente, String fornitore, Double penale, Double importo) {
+	    try {
+	        // Controlla se 'fatturato' è specificato
+	        if (fatturato != null) {
+	            return preFatturazioneMapper.PreFatturazioneToDTOList(
+	                preFatturazioneService.findPrefatturazioniByFiltri(
+	                    numeroPrefatturazione, dataPrefatturazione, totale, scadenzaPrefatturazione,
+	                    fatturato.booleanValue(), cliente, fornitore, penale, importo
+	                )
+	            );
+	        } else {
+	            // Se 'fatturato' non è specificato, escludi il filtro 'fatturato' dalla query
+	            return preFatturazioneMapper.PreFatturazioneToDTOList(
+	                preFatturazioneService.findPrefatturazioneByFiltri(
+	                    numeroPrefatturazione, dataPrefatturazione, totale, scadenzaPrefatturazione,
+	                    cliente, fornitore, penale, importo
+	                )
+	            );
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace(); // Gestisci le gestione delle eccezioni in modo appropriato
+	        throw e; // Lancia nuovamente l'eccezione o gestiscila in base alle tue esigenze
+	    }
 	}
 
 }

@@ -3,6 +3,8 @@ package com.tdgroup.Logistica.DTOResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 public class FatturazioneDTO {
 	private String numeroFattura;
     private LocalDateTime dataEmissione;

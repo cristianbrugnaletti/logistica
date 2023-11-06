@@ -1,5 +1,6 @@
 package com.tdgroup.Logistica.ServiceImpl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,12 +35,27 @@ public class PreFatturazioneServiceImpl implements PreFatturazioneService {
 	}
 
 	@Override
-	public PreFatturazione modificaPreFatturazione(PreFatturazione preFatturazione) {
+	public PreFatturazione modificaPreFatturazione(PreFatturazione preFatturazione, LocalDateTime nuovaScadenzaPrefatturazione) {
 		return preFatturazioneRepository.save(preFatturazione);
 	}
 
 	@Override
 	public List<PreFatturazione> findAll() {
 		return preFatturazioneRepository.findAll();
+	}
+
+	@Override
+	public List<PreFatturazione> findPrefatturazioniByFiltri(String numeroPrefatturazione,
+			LocalDateTime dataPrefatturazione, Double totale, LocalDateTime scadenzaPrefatturazione, Boolean fatturato,
+			String cliente, String fornitore, Double penale, Double importo) {
+		
+		return preFatturazioneRepository.findPrefatturazioniByFiltri(numeroPrefatturazione, dataPrefatturazione, totale, scadenzaPrefatturazione, fatturato, cliente, fornitore, penale, importo);
+	}
+
+	@Override
+	public List<PreFatturazione> findPrefatturazioneByFiltri(String numeroPrefatturazione,
+			LocalDateTime dataPrefatturazione, Double totale, LocalDateTime scadenzaPrefatturazione, String cliente,
+			String fornitore, Double penale, Double importo) {
+		return preFatturazioneRepository.findPrefatturazioneByFiltri(numeroPrefatturazione, dataPrefatturazione, totale, scadenzaPrefatturazione,  cliente, fornitore, penale, importo);
 	}
 }

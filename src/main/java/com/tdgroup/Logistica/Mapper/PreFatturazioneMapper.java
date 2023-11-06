@@ -23,6 +23,7 @@ public class PreFatturazioneMapper {
 		preFatturazioneDTO.setCliente(preFatturazione.getCliente());
 		preFatturazioneDTO.setFornitore(preFatturazione.getFornitore());
 		preFatturazioneDTO.setScadenzaPrefatturazione(preFatturazione.getScadenzaPrefatturazione());
+		preFatturazioneDTO.setFatturato(preFatturazione.isFatturato());
 
 		 
 	    List<Long> viaggioID = preFatturazione.getViaggi().stream()

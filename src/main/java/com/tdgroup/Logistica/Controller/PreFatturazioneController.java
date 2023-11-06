@@ -1,6 +1,11 @@
 package com.tdgroup.Logistica.Controller;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -56,7 +62,7 @@ public class PreFatturazioneController {
 	        }
 	}
 
-
+	@CrossOrigin(origins = "http://localhost:4200")
 	@DeleteMapping("RimuoviPrefatturazione/{numeroPreFatturazione}")
 	public ResponseEntity<Object> rimuoviPreFattura(@PathVariable String numeroPreFatturazione) {
 		 logger.info("Richiesta ricevuta per rimuovere la fattura con numero: {}", numeroPreFatturazione);
@@ -83,19 +89,28 @@ public class PreFatturazioneController {
 	        @RequestBody PreFatturazioneRequest request) {
 	    try {
 	        logger.info("Inizio modifica della pre-fatturazione");
-	        PreFatturazioneDTO preFatturazioneDTO = preFatturazioneFacade.modificaPreFatturazione(numeroPrefatturazione, request);
+
+	      
+
+	        LocalDateTime scadenzaPrefatturazione = null;
+	        if (request.getScadenzaPrefatturazione() != null) {
+	            scadenzaPrefatturazione = request.getScadenzaPrefatturazione();
+	        }
+
+	        PreFatturazioneDTO preFatturazioneDTO = preFatturazioneFacade.modificaPreFatturazione(numeroPrefatturazione, request, scadenzaPrefatturazione);
 	        logger.info("Fine modifica della pre-fatturazione");
 	        return ResponseEntity.ok(preFatturazioneDTO);
 	    } catch (IllegalArgumentException e) {
 	        logger.error("Errore durante la modifica della pre-fatturazione: attributi mancanti o non validi", e);
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-	        		 .body(Risposte.ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage(), "/aggiungipreFattura"));
+	                 .body(Risposte.ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage(), "/aggiungipreFattura"));
 	    } catch (Exception e) {
 	        logger.error("Errore imprevisto nella modifica della pre-fatturazione", e);
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	                .body(Risposte.ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Errore imprevisto nella modifica della pre-fatturazione", "/modifica/" + numeroPrefatturazione));
 	    }
 	}
+
 
 
 
@@ -148,6 +163,60 @@ public class PreFatturazioneController {
 	        );
 	    }
 	}
+
+	
+	
+	
+	
+	@CrossOrigin(origins = "http://localhost:4200")
+	@GetMapping("/cercaPrefatturazioni")
+	public ResponseEntity<Object> cercaPrefatturazioni(
+	        @RequestParam(name = "numeroPrefatturazione", required = false) String numeroPrefatturazione,
+	        @RequestParam(name = "dataPrefatturazione", required = false) String dataPrefatturazioneString,
+	        @RequestParam(name = "totale", required = false) Double totale,
+	        @RequestParam(name = "scadenzaPrefatturazione", required = false) String scadenzaPrefatturazioneString,
+	        @RequestParam(name = "fatturato", required = false) Boolean fatturato,
+	        @RequestParam(name = "cliente", required = false) String cliente,
+	        @RequestParam(name = "fornitore", required = false) String fornitore,
+	        @RequestParam(name = "penale", required = false) Double penale,
+	        @RequestParam(name = "importo", required = false) Double importo) {
+	    try {
+	        LocalDateTime dataPrefatturazione = null;
+	        LocalDateTime scadenzaPrefatturazione = null;
+
+	        if (dataPrefatturazioneString != null && !dataPrefatturazioneString.isEmpty()) {
+	            dataPrefatturazione = LocalDateTime.parse(dataPrefatturazioneString, DateTimeFormatter.ISO_DATE_TIME);
+	        }
+
+	        if (scadenzaPrefatturazioneString != null && !scadenzaPrefatturazioneString.isEmpty()) {
+	            scadenzaPrefatturazione = LocalDateTime.parse(scadenzaPrefatturazioneString, DateTimeFormatter.ISO_DATE_TIME);
+	        }
+
+	        List<PreFatturazioneDTO> prefatturazioni = preFatturazioneFacade.findPrefatturazioniByFiltri(
+	            numeroPrefatturazione,
+	            dataPrefatturazione,
+	            totale,
+	            scadenzaPrefatturazione,
+	            fatturato,
+	            cliente,
+	            fornitore,
+	            penale,
+	            importo
+	        );
+
+	        if (prefatturazioni.isEmpty()) {
+	            return ResponseEntity.ok(Collections.emptyList()); // Restituisce una lista vuota invece di una stringa
+	        }
+
+	        return ResponseEntity.ok(prefatturazioni);
+	    } catch (Exception e) {
+	        logger.error("Errore durante la ricerca delle prefatturazioni con filtri", e);
+	        Map<String, String> errorResponse = new HashMap<>();
+	        errorResponse.put("error", "Errore durante la ricerca delle prefatturazioni con filtri: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+	    }
+	}
+
 
 
 }

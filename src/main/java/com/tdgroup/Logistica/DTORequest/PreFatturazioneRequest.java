@@ -13,7 +13,7 @@ public class PreFatturazioneRequest {
 	private String fornitore;
 	private LocalDateTime scadenzaPrefatturazione;
 	private List<Long> idViaggio;
-
+	private Boolean fatturato;
 
 
 	public Double getImporto() {
@@ -52,6 +52,12 @@ public class PreFatturazioneRequest {
 	}
 	public void setIdViaggio(List<Long> idViaggio) {
 		this.idViaggio = idViaggio;
+	}
+	public Boolean getFatturato() {
+		return fatturato;
+	}
+	public void setFatturato(Boolean fatturato) {
+		this.fatturato = fatturato;
 	}
 
 	
