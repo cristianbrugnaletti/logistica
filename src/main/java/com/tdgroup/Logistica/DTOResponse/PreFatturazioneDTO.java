@@ -13,6 +13,7 @@ public class PreFatturazioneDTO {
     private String fornitore;
     private LocalDateTime scadenzaPrefatturazione;
     private List<Long> idViaggio;
+    private boolean fatturato;
     
 	public String getNumeroPrefatturazione() {
 		return numeroPrefatturazione;
@@ -67,6 +68,12 @@ public class PreFatturazioneDTO {
 	}
 	public void setIdViaggio(List<Long> idViaggio) {
 		this.idViaggio = idViaggio;
+	}
+	public boolean isFatturato() {
+		return fatturato;
+	}
+	public void setFatturato(boolean fatturato) {
+		this.fatturato = fatturato;
 	}
     
     

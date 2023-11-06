@@ -1,5 +1,7 @@
 package com.tdgroup.Logistica.Facade;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -229,6 +231,31 @@ public class FatturazioneFacade {
 	}
 
 
+	
+	
+	
+	
+	
+	
+	
+    public List<FatturazioneDTO> findFatturazioniByFiltri(
+            String numeroFattura,
+            LocalDateTime dataEmissione ,
+            Double totale,
+            Double penale,
+            String cliente,
+            String fornitore) {
+        try {
+            return fatturazioneMapper.fatturazioneToDTOList(
+                fatturazioneService.findFatturazioneByFiltri(
+                    numeroFattura, dataEmissione, totale, penale, cliente, fornitore
+                )
+            );
+        } catch (Exception e) {
+            e.printStackTrace(); // Gestisci le gestione delle eccezioni in modo appropriato
+            throw e; // Lancia nuovamente l'eccezione o gestiscila in base alle tue esigenze
+        }
+    }
 
 }
 
