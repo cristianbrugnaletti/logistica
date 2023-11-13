@@ -17,4 +17,5 @@ public interface PreFatturazioneService {
 	List<PreFatturazione> findAll();
 	List<PreFatturazione> findPrefatturazioniByFiltri(String numeroPrefatturazione, LocalDateTime dataPrefatturazione, Double totale, LocalDateTime scadenzaPrefatturazione, Boolean fatturato, String cliente, String fornitore, Double penale, Double importo);
 	List<PreFatturazione> findPrefatturazioneByFiltri(String numeroPrefatturazione, LocalDateTime dataPrefatturazione, Double totale, LocalDateTime scadenzaPrefatturazione,  String cliente, String fornitore, Double penale, Double importo);
+	Optional<PreFatturazione>findPreFatturazioneByNumeroPrefatturazione(String numeroPrefatturazione);
 }

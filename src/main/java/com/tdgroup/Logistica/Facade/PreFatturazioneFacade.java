@@ -239,6 +239,19 @@ ChiamataHttp chiamataHttp;
 	            throw new IllegalArgumentException("Attributi mancanti o non validi nella richiesta di modifica pre-fatturazione");
 	        }
 
+	        
+	        if (!chiamataHttp.verificaEsistenzaFornitoreAsync(request.getFornitore()).join()) {
+	            logger.error("Errore: Il fornitore specificato non esiste. Fornitore: " + request.getFornitore());
+	            throw new IllegalArgumentException("Il fornitore specificato non esiste.");
+	        }
+
+	        // Effettua la chiamata HTTP per verificare l'esistenza del cliente
+	        if (!chiamataHttp.verificaEsistenzaClienteAsync(request.getCliente()).join()) {
+	            logger.error("Errore: Il cliente specificato non esiste. Cliente: " + request.getCliente());
+	            throw new IllegalArgumentException("Il cliente specificato non esiste.");
+	        }
+	        
+	        
 	        // Step 2: Recupero dell'entità esistente
 	        logger.debug("Recupero della pre-fatturazione per il numero: {}", numeroPrefatturazione);
 	        PreFatturazione preFatturazioneEsistente = preFatturazioneService
@@ -246,7 +259,7 @@ ChiamataHttp chiamataHttp;
 	            .orElseThrow(() -> new IllegalArgumentException("La pre-fatturazione " + numeroPrefatturazione + " non esiste"));
 
 	        // Step 3: Validazione dei dati
-	        LocalDateTime dataPrefatturazione = LocalDateTime.now();
+	        LocalDateTime dataPrefatturazioneEsistente = preFatturazioneEsistente.getDataPrefatturazione();
 	        Double importo = request.getImporto();
 	        Double penale = request.getPenale();
 	        String cliente = request.getCliente();
@@ -256,7 +269,7 @@ ChiamataHttp chiamataHttp;
 	        Double totale = importo + penale;
 
 	        // Controlli aggiuntivi
-	        if (scadenzaPreFatturazione.isBefore(dataPrefatturazione)) {
+	        if (scadenzaPreFatturazione.isBefore(dataPrefatturazioneEsistente)) {
 	            logger.error("La scadenza della prefatturazione deve essere successiva alla data di prefatturazione");
 	            throw new IllegalArgumentException("La scadenza della prefatturazione deve essere successiva alla data di prefatturazione");
 	        }
@@ -281,7 +294,7 @@ ChiamataHttp chiamataHttp;
 	        }
 
 	        // Step 5: Aggiornamento dei dati dell'entità esistente
-	        preFatturazioneEsistente.setDataPrefatturazione(dataPrefatturazione);
+	        preFatturazioneEsistente.setDataPrefatturazione(dataPrefatturazioneEsistente);
 	        preFatturazioneEsistente.setImporto(importo);
 	        preFatturazioneEsistente.setPenale(penale);
 	        preFatturazioneEsistente.setTotale(totale);
@@ -396,5 +409,33 @@ ChiamataHttp chiamataHttp;
 	        throw e; // Lancia nuovamente l'eccezione o gestiscila in base alle tue esigenze
 	    }
 	}
+	
+	
+	
+	  public Optional<PreFatturazioneDTO> findPreFatturazioneByNumeroPrefatturazione(String numeroPrefatturazione) {
+	        try {
+	            if (numeroPrefatturazione == null || numeroPrefatturazione.trim().isEmpty()) {
+	                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il numero di prefattura non può essere vuoto");
+	            }
+
+	            logger.info("Inizio ricerca della prefatturazione con numero di prefattura: {}", numeroPrefatturazione);
+
+	            Optional<PreFatturazioneDTO> preFatturazioneDTO = preFatturazioneService.findPreFatturazioneByNumeroPrefatturazione(numeroPrefatturazione)
+	                    .map(preFatturazioneMapper::preFatturazioneToDTO);
+
+	            if (preFatturazioneDTO.isPresent()) {
+	                logger.info("Prefatturazione trovata con il numero di prefattura: {}", numeroPrefatturazione);
+	            } else {
+	                logger.warn("Prefatturazione non trovata con il numero di prefattura: {}", numeroPrefatturazione);
+	            }
+
+	            return preFatturazioneDTO;
+	        } catch (ResponseStatusException e) {
+	            throw e;
+	        } catch (Exception e) {
+	            logger.error("Errore durante la ricerca della prefatturazione con il numero di prefattura: {}", numeroPrefatturazione, e);
+	            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Errore durante la ricerca della prefatturazione", e);
+	        }
+	    }
 
 }
