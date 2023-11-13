@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.google.common.base.Optional;
 import com.tdgroup.Logistica.DTORequest.PreFatturazioneRequest;
 import com.tdgroup.Logistica.DTOResponse.FatturazioneDTO;
 import com.tdgroup.Logistica.DTOResponse.PreFatturazioneDTO;
@@ -218,5 +219,27 @@ public class PreFatturazioneController {
 	}
 
 
+    @GetMapping("/findByNumeroPrefatturazione/{numeroPrefatturazione}")
+    public ResponseEntity<Object> findByNumeroPrefatturazione(@PathVariable("numeroPrefatturazione") String numeroPrefatturazione) {
+        logger.info("Richiesta ricevuta per cercare la prefatturazione con numero di prefattura: {}", numeroPrefatturazione);
+
+        try {
+            java.util.Optional<PreFatturazioneDTO> preFatturazioneDTO = preFatturazioneFacade.findPreFatturazioneByNumeroPrefatturazione(numeroPrefatturazione);
+
+            if (preFatturazioneDTO.isPresent()) {
+                logger.info("Prefatturazione trovata con il numero di prefattura: {}", numeroPrefatturazione);
+                return ResponseEntity.ok(preFatturazioneDTO.get());
+            } else {
+                logger.warn("Nessuna prefatturazione trovata con il numero di prefattura: {}", numeroPrefatturazione);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Nessuna prefatturazione trovata con il numero di prefattura: " + numeroPrefatturazione);
+            }
+        } catch (Exception e) {
+            logger.error("Errore durante la ricerca della prefatturazione con il numero di prefattura: {}", numeroPrefatturazione, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Errore durante la ricerca della prefatturazione con il numero di prefattura: " + e.getMessage());
+        }
+    }
+	
 
 }

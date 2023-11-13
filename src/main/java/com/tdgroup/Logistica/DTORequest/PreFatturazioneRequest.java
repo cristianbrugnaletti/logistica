@@ -6,7 +6,7 @@ import java.util.List;
 public class PreFatturazioneRequest {
 
 	
-	
+	private LocalDateTime dataPrefatturazione;
 	private Double importo;
 	private Double penale;
 	private String cliente;
@@ -58,6 +58,12 @@ public class PreFatturazioneRequest {
 	}
 	public void setFatturato(Boolean fatturato) {
 		this.fatturato = fatturato;
+	}
+	public LocalDateTime getDataPrefatturazione() {
+		return dataPrefatturazione;
+	}
+	public void setDataPrefatturazione(LocalDateTime dataPrefatturazione) {
+		this.dataPrefatturazione = dataPrefatturazione;
 	}
 
 	

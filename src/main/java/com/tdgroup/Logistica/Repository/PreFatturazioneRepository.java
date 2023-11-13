@@ -50,12 +50,12 @@ public interface PreFatturazioneRepository extends JpaRepository<PreFatturazione
     
     
     @Query("SELECT p FROM PreFatturazione p WHERE " +
-            "(:numeroPrefatturazione IS NULL OR p.numeroPrefatturazione LIKE CONCAT(:numeroPrefatturazione, '%')) " +
+            "(:numeroPrefatturazione IS NULL OR p.numeroPrefatturazione LIKE CONCAT('%',:numeroPrefatturazione, '%')) " +
             "AND (:dataPrefatturazione IS NULL OR DATE(p.dataPrefatturazione) = DATE(:dataPrefatturazione)) " +
             "AND (:totale IS NULL OR p.totale = :totale) " +
             "AND (:scadenzaPrefatturazione IS NULL OR DATE(p.scadenzaPrefatturazione) = DATE(:scadenzaPrefatturazione)) " +
-            "AND (:cliente IS NULL OR p.cliente LIKE CONCAT(:cliente, '%')) " +
-            "AND (:fornitore IS NULL OR p.fornitore LIKE CONCAT(:fornitore, '%')) " +
+            "AND (:cliente IS NULL OR p.cliente LIKE CONCAT('%',:cliente, '%')) " +
+            "AND (:fornitore IS NULL OR p.fornitore LIKE CONCAT('%',:fornitore, '%')) " +
             "AND (:penale IS NULL OR p.penale = :penale) " +
             "AND (:importo IS NULL OR p.importo = :importo)")
     List<PreFatturazione> findPrefatturazioneByFiltri(

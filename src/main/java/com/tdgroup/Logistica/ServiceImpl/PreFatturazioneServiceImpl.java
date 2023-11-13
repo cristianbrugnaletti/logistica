@@ -58,4 +58,9 @@ public class PreFatturazioneServiceImpl implements PreFatturazioneService {
 			String fornitore, Double penale, Double importo) {
 		return preFatturazioneRepository.findPrefatturazioneByFiltri(numeroPrefatturazione, dataPrefatturazione, totale, scadenzaPrefatturazione,  cliente, fornitore, penale, importo);
 	}
+
+	@Override
+	public Optional<PreFatturazione> findPreFatturazioneByNumeroPrefatturazione(String numeroPrefatturazione) {
+		return preFatturazioneRepository.findByNumeroPrefatturazione(numeroPrefatturazione);
+	}
 }
